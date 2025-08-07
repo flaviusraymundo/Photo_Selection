@@ -272,7 +272,7 @@ function ArrangeStep({ grid, getPhoto, onDragStart, onDrop, finish }) {
   return (
     <div className="w-full max-w-6xl mx-auto text-center">
       <h2 className="text-xl font-semibold mb-4">
-        3. Arranje para ordenar (20 slots - 4 linhas × 5 colunas)
+        Seleção final
       </h2>
       <div className="grid grid-cols-5 gap-4 mb-6">
         {grid.map((id, idx) => (
@@ -282,7 +282,7 @@ function ArrangeStep({ grid, getPhoto, onDragStart, onDrop, finish }) {
             onDragStart={(e) => id && onDragStart(e, idx)}
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => onDrop(e, idx)}
-            className="aspect-[4/3] w-full h-40 border border-dashed border-gray-400 rounded-lg flex items-center justify-center overflow-hidden bg-white"
+            className="aspect-[4/3] w-full h-48 rounded-lg flex items-center justify-center overflow-hidden bg-gray-50 hover:bg-gray-100 transition-colors"
           >
             {id ? (
               <img
