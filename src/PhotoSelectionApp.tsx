@@ -55,10 +55,12 @@ export default function PhotoSelectionApp() {
   useEffect(() => {
     const h = (e) => {
       if (step !== 1) return;
+      e.preventDefault(); // Previne comportamentos padrão
       if (["+", "="].includes(e.key)) classify("positive");
       else if (["-", "_"].includes(e.key)) classify("negative");
       else if (e.key === "ArrowLeft") setCurrentIdx((i) => (i > 0 ? i - 1 : 0));
-      else classify("neutral");
+      else if (e.key === " " || e.key === "Enter" || e.key === "Escape") classify("neutral");
+      // Outras teclas não fazem nada (não classificam automaticamente)
     };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
