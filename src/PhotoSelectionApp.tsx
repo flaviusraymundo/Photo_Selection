@@ -112,7 +112,7 @@ export default function PhotoSelectionApp() {
           chosen={chosen}
           toggleChosen={toggleChosen}
           proceed={() => {
-            const base = [...chosen, ...Array(12 - chosen.length).fill(null)];
+            const base = [...chosen, ...Array(20 - chosen.length).fill(null)];
             setGrid(base);
             setStep(3);
           }}
@@ -175,9 +175,9 @@ function UploadStep({ handleFiles, fileInputRef }) {
 
 function ClassificationStep({ photo, idx, total, classify, goBack }) {
   return (
-    <div className="w-full max-w-lg text-center space-y-4">
+    <div className="w-full max-w-2xl text-center space-y-4">
       <h2 className="font-medium">Foto {idx + 1} / {total}</h2>
-      <div className="h-96 flex items-center justify-center">
+      <div className="h-[600px] flex items-center justify-center">
         <img
           src={photo.url}
           alt="preview"
@@ -226,7 +226,7 @@ function SelectionStep({ photos, chosen, toggleChosen, proceed }) {
       <h2 className="text-xl font-semibold mb-4 text-center">
         2. Selecione as 7 fotos mais impactantes ({chosen.length}/7 selecionadas)
       </h2>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
         {photos.map((p) => (
           <div
             key={p.id}
@@ -235,7 +235,7 @@ function SelectionStep({ photos, chosen, toggleChosen, proceed }) {
               chosen.includes(p.id) ? "ring-4 ring-blue-500" : ""
             }`}
           >
-            <img src={p.url} alt="option" className="h-36 w-full object-cover" />
+            <img src={p.url} alt="option" className="h-48 w-full object-cover" />
             <span className={`absolute top-2 left-2 px-2 py-1 text-xs rounded font-medium text-white ${
               p.status === "positive" ? "bg-green-500" : "bg-red-500"
             }`}>
@@ -270,11 +270,11 @@ function SelectionStep({ photos, chosen, toggleChosen, proceed }) {
 
 function ArrangeStep({ grid, getPhoto, onDragStart, onDrop, finish }) {
   return (
-    <div className="w-full max-w-4xl mx-auto text-center">
+    <div className="w-full max-w-6xl mx-auto text-center">
       <h2 className="text-xl font-semibold mb-4">
-        3. Arraste para ordenar (12 slots)
+        3. Arranje para ordenar (20 slots - 4 linhas × 5 colunas)
       </h2>
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-5 gap-4 mb-6">
         {grid.map((id, idx) => (
           <div
             key={idx}
@@ -282,13 +282,13 @@ function ArrangeStep({ grid, getPhoto, onDragStart, onDrop, finish }) {
             onDragStart={(e) => id && onDragStart(e, idx)}
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => onDrop(e, idx)}
-            className="h-32 w-full border border-dashed border-gray-400 rounded-lg flex items-center justify-center overflow-hidden bg-white"
+            className="aspect-[4/3] w-full border border-dashed border-gray-400 rounded-lg flex items-center justify-center overflow-hidden bg-white"
           >
             {id ? (
               <img
                 src={getPhoto(id)?.url}
                 alt="slot"
-                className="h-full w-full object-cover"
+                className="max-h-full max-w-full object-contain"
               />
             ) : (
               <span className="text-gray-300 text-sm">vazio</span>
