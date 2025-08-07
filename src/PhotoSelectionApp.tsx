@@ -1,7 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Upload, Users, Eye, Settings } from "lucide-react";
-import { useRealtimeSync } from './hooks/useRealtimeSync';
-import { SessionManager } from './components/SessionManager';
+import { Upload } from "lucide-react";
 
 /**
  * PhotoSelectionApp – versão estável 🟢
@@ -16,14 +14,6 @@ import { SessionManager } from './components/SessionManager';
  */
 
 export default function PhotoSelectionApp() {
-  // Gerenciamento de sessão
-  const [sessionId, setSessionId] = useState(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get('session') || '';
-  });
-  
-  const { isOperator, isConnected, sessionData, syncToSupabase } = useRealtimeSync(sessionId);
-  
   const [step, setStep] = useState(0);
   const [photos, setPhotos] = useState([]);            // { id, file, url, status }
   const [currentIdx, setCurrentIdx] = useState(0);
@@ -34,33 +24,12 @@ export default function PhotoSelectionApp() {
   const [previewPhoto, setPreviewPhoto] = useState(null); // para modal de preview
   const fileInputRef = useRef();
 
-  // Sincronizar estado local com dados da sessão
-  useEffect(() => {
-    if (sessionData && !isOperator) {
-      setStep(sessionData.step);
-      setPhotos(sessionData.photos);
-      setCurrentIdx(sessionData.current_photo_index);
-      setChosen(sessionData.chosen_photos);
-      setGrid(sessionData.grid_positions);
-      setDescriptions(sessionData.descriptions);
-    }
-  }, [sessionData, isOperator]);
-
-  // Função para sincronizar mudanças
-  const syncState = (updates: any) => {
-    if (isOperator) {
-      syncToSupabase(updates);
-    }
-  };
-
   /*************** helpers ***************/
   const shuffle = (arr) => arr.sort(() => Math.random() - 0.5);
   const getPhoto = (id) => photos.find((p) => p.id === id);
 
   /*************** upload ***************/
   const handleFiles = (files) => {
-    if (!isOperator) return; // Apenas operador pode fazer upload
-    
     const arr = Array.from(files).slice(0, 88);
     const mapped = arr.map((f, i) => ({
       id: `${Date.now()}_${i}`,
@@ -69,36 +38,28 @@ export default function PhotoSelectionApp() {
       status: "neutral",
     }));
     setPhotos(shuffle(mapped));
-    syncState({ photos: shuffle(mapped), step: 1 });
     setStep(1);
   };
 
   /*************** classificação ***************/
   const classify = (status) => {
-    if (!isOperator) return; // Apenas operador pode classificar
-    
     setPhotos((prev) => {
       const clone = [...prev];
       clone[currentIdx].status = status;
       return clone;
     });
     
-    const newIdx = currentIdx + 1 < photos.length ? currentIdx + 1 : currentIdx;
-    const newStep = currentIdx + 1 < photos.length ? step : 2;
-    
     if (currentIdx + 1 < photos.length) {
-      setCurrentIdx(newIdx);
-      syncState({ current_photo_index: newIdx });
+      setCurrentIdx(currentIdx + 1);
     } else {
       setStep(2);
-      syncState({ step: 2 });
     }
   };
 
   // atalhos de teclado
   useEffect(() => {
     const h = (e) => {
-      if (step !== 1 || !isOperator) return; // Apenas operador pode usar atalhos
+      if (step !== 1) return;
       e.preventDefault(); // Previne comportamentos padrão
       if (["+", "="].includes(e.key)) classify("positive");
       else if (["-", "_"].includes(e.key)) classify("negative");
@@ -112,45 +73,25 @@ export default function PhotoSelectionApp() {
 
   /*************** seleção ***************/
   const toggleChosen = (id) => {
-    if (!isOperator) return; // Apenas operador pode selecionar
-    
-    setChosen((prev) => {
-      const newChosen = prev.includes(id) 
+    setChosen((prev) => 
+      prev.includes(id) 
         ? prev.filter((x) => x !== id)
         : prev.length === 7 
           ? prev 
-          : [...prev, id];
-      
-      syncState({ chosen_photos: newChosen });
-      return newChosen;
-    });
+          : [...prev, id]
+    );
   };
 
   /*************** drag-and-drop ***************/
   const onDragStart = (e, from) => e.dataTransfer.setData("from", from);
   const onDrop = (e, to) => {
-    if (!isOperator) return; // Apenas operador pode mover
-    
     const from = parseInt(e.dataTransfer.getData("from"));
     if (Number.isNaN(from) || from === to) return;
     setGrid((prev) => {
       const clone = [...prev];
       [clone[from], clone[to]] = [clone[to], clone[from]];
-      syncState({ grid_positions: clone });
       return clone;
     });
-  };
-
-  // Gerenciamento de sessão
-  const createSession = () => {
-    const newId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    setSessionId(newId);
-    window.history.pushState({}, '', `?session=${newId}`);
-  };
-
-  const joinSession = (id: string) => {
-    setSessionId(id);
-    window.history.pushState({}, '', `?session=${id}`);
   };
 
   /*************** relatório ***************/
@@ -158,52 +99,10 @@ export default function PhotoSelectionApp() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 flex flex-col items-center">
-      {/* Gerenciador de Sessão */}
-      {!sessionId && (
-        <SessionManager
-          sessionId={sessionId}
-          isOperator={isOperator}
-          isConnected={isConnected}
-          onCreateSession={createSession}
-          onJoinSession={joinSession}
-        />
-      )}
-
-      {/* Indicador de Status */}
-      {sessionId && (
-        <div className="fixed top-4 right-4 bg-white rounded-lg shadow-lg p-4 border z-50">
-          <div className="flex items-center gap-2 text-sm">
-            {isOperator ? (
-              <>
-                <Settings className="w-4 h-4 text-blue-500" />
-                <span className="font-medium">Operador</span>
-              </>
-            ) : (
-              <>
-                <Eye className="w-4 h-4 text-green-500" />
-                <span className="font-medium">Observador</span>
-              </>
-            )}
-          </div>
-          <div className="text-xs text-gray-500 mt-1">
-            Sessão: {sessionId.slice(8, 16)}...
-          </div>
-          {isOperator && (
-            <div className="text-xs text-blue-600 mt-2">
-              Link para observação:
-              <div className="bg-gray-100 p-1 rounded mt-1 font-mono text-xs break-all">
-                {window.location.origin}?session={sessionId}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
       {step === 0 && (
         <UploadStep 
           handleFiles={handleFiles} 
           fileInputRef={fileInputRef}
-          isOperator={isOperator}
         />
       )}
 
@@ -214,7 +113,6 @@ export default function PhotoSelectionApp() {
           total={photos.length}
           classify={classify}
           goBack={() => setCurrentIdx((i) => (i > 0 ? i - 1 : 0))}
-          isOperator={isOperator}
         />
       )}
 
@@ -224,13 +122,10 @@ export default function PhotoSelectionApp() {
           chosen={chosen}
           toggleChosen={toggleChosen}
           proceed={() => {
-            if (!isOperator) return;
             const base = [...chosen, ...Array(20 - chosen.length).fill(null)];
             setGrid(base);
-            syncState({ grid_positions: base, step: 3 });
             setStep(3);
           }}
-          isOperator={isOperator}
           previewPhoto={previewPhoto}
           setPreviewPhoto={setPreviewPhoto}
         />
@@ -243,7 +138,6 @@ export default function PhotoSelectionApp() {
           onDragStart={onDragStart}
           onDrop={onDrop}
           finish={() => setStep(4)}
-          isOperator={isOperator}
         />
       )}
 
@@ -254,8 +148,6 @@ export default function PhotoSelectionApp() {
           setDescriptions={setDescriptions}
           exporting={exporting}
           setExporting={setExporting}
-          isOperator={isOperator}
-          syncState={syncState}
         />
       )}
     </div>
@@ -264,47 +156,36 @@ export default function PhotoSelectionApp() {
 
 /* ---------- componentes ---------- */
 
-function UploadStep({ handleFiles, fileInputRef, isOperator }) {
+function UploadStep({ handleFiles, fileInputRef }) {
   return (
     <div className="text-center space-y-6 max-w-md mx-auto">
       <h1 className="text-3xl font-bold text-gray-800">Seleção de Fotos</h1>
       <p className="text-gray-600">
         Faça upload de até 88 fotos para classificação e seleção
       </p>
-      {!isOperator && (
-        <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded">
-          Aguardando o operador fazer upload das fotos...
-        </div>
-      )}
       <div
-        className={`bg-white p-8 rounded-xl shadow-lg border-2 border-dashed transition-colors ${
-          isOperator 
-            ? 'border-gray-300 hover:border-blue-400 cursor-pointer' 
-            : 'border-gray-200 cursor-not-allowed opacity-50'
-        }`}
-        onClick={() => isOperator && fileInputRef.current?.click()}
+        className="bg-white p-8 rounded-xl shadow-lg border-2 border-dashed border-gray-300 hover:border-blue-400 cursor-pointer transition-colors"
+        onClick={() => fileInputRef.current?.click()}
       >
         <Upload className="w-16 h-16 text-blue-500 mx-auto mb-4" />
         <p className="text-lg font-medium mb-2">Clique para selecionar fotos</p>
         <p className="text-sm text-gray-500">
           Ou arraste e solte suas imagens aqui
         </p>
-        {isOperator && (
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            ref={fileInputRef}
-            onChange={(e) => handleFiles(e.target.files)}
-            className="hidden"
-          />
-        )}
+        <input
+          type="file"
+          accept="image/*"
+          multiple
+          ref={fileInputRef}
+          onChange={(e) => handleFiles(e.target.files)}
+          className="hidden"
+        />
       </div>
     </div>
   );
 }
 
-function ClassificationStep({ photo, idx, total, classify, goBack, isOperator }) {
+function ClassificationStep({ photo, idx, total, classify, goBack }) {
   return (
     <div className="w-full max-w-2xl text-center space-y-4">
       <h2 className="font-medium">Foto {idx + 1} / {total}</h2>
@@ -318,85 +199,72 @@ function ClassificationStep({ photo, idx, total, classify, goBack, isOperator })
       <div className="flex justify-center gap-3">
         <button
           onClick={goBack}
-          disabled={idx === 0 || !isOperator}
+          disabled={idx === 0}
           className={`px-4 py-2 rounded-xl bg-gray-300 hover:bg-gray-400 ${
-            (idx === 0 || !isOperator) ? "opacity-50 cursor-not-allowed" : ""
+            idx === 0 ? "opacity-50 cursor-not-allowed" : ""
           }`}
         >
           ← Anterior
         </button>
         <button
           onClick={() => classify("positive")}
-          disabled={!isOperator}
-          className={`px-6 py-2 rounded-xl bg-green-500 text-white hover:bg-green-600 ${
-            !isOperator ? "opacity-50 cursor-not-allowed" : ""
-          }`}
+          className="px-6 py-2 rounded-xl bg-green-500 text-white hover:bg-green-600"
         >
           Positiva (+)
         </button>
         <button
           onClick={() => classify("negative")}
-          disabled={!isOperator}
-          className={`px-6 py-2 rounded-xl bg-red-500 text-white hover:bg-red-600 ${
-            !isOperator ? "opacity-50 cursor-not-allowed" : ""
-          }`}
+          className="px-6 py-2 rounded-xl bg-red-500 text-white hover:bg-red-600"
         >
           Negativa (-)
         </button>
         <button
           onClick={() => classify("neutral")}
-          disabled={!isOperator}
-          className={`px-6 py-2 rounded-xl bg-gray-300 hover:bg-gray-400 ${
-            !isOperator ? "opacity-50 cursor-not-allowed" : ""
-          }`}
+          className="px-6 py-2 rounded-xl bg-gray-300 hover:bg-gray-400"
         >
           Neutra (qualquer)
         </button>
       </div>
       <p className="text-sm text-gray-500">
-        {isOperator 
-          ? "Use ← para voltar. Atalhos: +/=: positiva, -/_: negativa, outra tecla: neutra."
-          : "Aguardando classificação do operador..."
-        }
+        Use ← para voltar. Atalhos: +/=: positiva, -/_: negativa, outra tecla: neutra.
       </p>
     </div>
   );
 }
 
-function SelectionStep({ photos, chosen, toggleChosen, proceed, isOperator, previewPhoto, setPreviewPhoto }) {
+function SelectionStep({ photos, chosen, toggleChosen, proceed, previewPhoto, setPreviewPhoto }) {
   return (
     <>
       <div className="w-full max-w-5xl">
-      <h2 className="text-xl font-semibold mb-4 text-center">
-        2. Selecione as 7 fotos mais impactantes ({chosen.length}/7 selecionadas)
-      </h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-        {photos.map((p) => (
-          <div
-            key={p.id}
-            className={`relative rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow ${
-              chosen.includes(p.id) ? "ring-4 ring-blue-500" : ""
-            }`}
-          >
-            <img 
-              src={p.url} 
-              alt="option" 
-              className="h-48 w-full object-contain bg-gray-50 cursor-pointer"
-              onClick={() => setPreviewPhoto(p)}
-            />
-            <span className={`absolute top-2 left-2 px-2 py-1 text-xs rounded font-medium text-white ${
-              p.status === "positive" ? "bg-green-500" : "bg-red-500"
-            }`}>
-              {p.status === "positive" ? "+" : "-"}
-            </span>
-            {chosen.includes(p.id) && (
-              <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
-                <div className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
-                  {chosen.indexOf(p.id) + 1}
+        <h2 className="text-xl font-semibold mb-4 text-center">
+          2. Selecione as 7 fotos mais impactantes ({chosen.length}/7 selecionadas)
+        </h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+          {photos.map((p) => (
+            <div
+              key={p.id}
+              className={`relative rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow ${
+                chosen.includes(p.id) ? "ring-4 ring-blue-500" : ""
+              }`}
+            >
+              <img 
+                src={p.url} 
+                alt="option" 
+                className="h-48 w-full object-contain bg-gray-50 cursor-pointer"
+                onClick={() => setPreviewPhoto(p)}
+              />
+              <span className={`absolute top-2 left-2 px-2 py-1 text-xs rounded font-medium text-white ${
+                p.status === "positive" ? "bg-green-500" : "bg-red-500"
+              }`}>
+                {p.status === "positive" ? "+" : "-"}
+              </span>
+              {chosen.includes(p.id) && (
+                <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
+                  <div className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
+                    {chosen.indexOf(p.id) + 1}
+                  </div>
                 </div>
-              </div>
-            )}
-            {isOperator && (
+              )}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -410,32 +278,26 @@ function SelectionStep({ photos, chosen, toggleChosen, proceed, isOperator, prev
               >
                 {chosen.includes(p.id) ? "−" : "+"}
               </button>
-            )}
-          </div>
-        ))}
+            </div>
+          ))}
+        </div>
+        <div className="text-center mt-6">
+          <button
+            disabled={chosen.length !== 7}
+            onClick={proceed}
+            className={`px-8 py-3 rounded-xl text-white font-medium transition-colors ${
+              chosen.length === 7
+                ? "bg-blue-600 hover:bg-blue-700 cursor-pointer" 
+                : "bg-gray-400 cursor-not-allowed"
+            }`}
+          >
+            {chosen.length === 7 
+              ? "Continuar para Organização" 
+              : `Selecione ${7 - chosen.length} foto(s)`
+            }
+          </button>
+        </div>
       </div>
-      <div className="text-center mt-6">
-        {!isOperator && (
-          <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
-            Aguardando o operador selecionar as fotos...
-          </div>
-        )}
-        <button
-          disabled={chosen.length !== 7 || !isOperator}
-          onClick={proceed}
-          className={`px-8 py-3 rounded-xl text-white font-medium transition-colors ${
-            (chosen.length === 7 && isOperator)
-              ? "bg-blue-600 hover:bg-blue-700 cursor-pointer" 
-              : "bg-gray-400 cursor-not-allowed"
-          }`}
-        >
-          {chosen.length === 7 
-            ? "Continuar para Organização" 
-            : `Selecione ${7 - chosen.length} foto(s)`
-          }
-        </button>
-      </div>
-    </div>
 
       {/* Modal de Preview */}
       {previewPhoto && (
@@ -470,28 +332,21 @@ function SelectionStep({ photos, chosen, toggleChosen, proceed, isOperator, prev
   );
 }
 
-function ArrangeStep({ grid, getPhoto, onDragStart, onDrop, finish, isOperator }) {
+function ArrangeStep({ grid, getPhoto, onDragStart, onDrop, finish }) {
   return (
     <div className="w-full max-w-6xl mx-auto text-center">
       <h2 className="text-xl font-semibold mb-4">
-        Seleção final
+        3. Organize as fotos selecionadas (arraste para reordenar)
       </h2>
-      {!isOperator && (
-        <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
-          Aguardando o operador organizar as fotos...
-        </div>
-      )}
-      <div className="grid grid-cols-5 gap-4 mb-6">
+      <div className="grid grid-cols-4 gap-4 mb-6">
         {grid.map((id, idx) => (
           <div
             key={idx}
-            draggable={Boolean(id) && isOperator}
+            draggable={Boolean(id)}
             onDragStart={(e) => id && onDragStart(e, idx)}
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => onDrop(e, idx)}
-            className={`aspect-[4/3] w-full h-64 rounded-lg flex items-center justify-center overflow-hidden bg-gray-50 transition-colors ${
-              isOperator ? 'hover:bg-gray-100' : ''
-            }`}
+            className="aspect-[4/3] w-full h-64 rounded-lg flex items-center justify-center overflow-hidden bg-gray-100 hover:bg-gray-200 transition-colors"
           >
             {id ? (
               <img
@@ -499,18 +354,15 @@ function ArrangeStep({ grid, getPhoto, onDragStart, onDrop, finish, isOperator }
                 alt="slot"
                 className="max-h-full max-w-full object-contain"
               />
-            ) : null}
+            ) : (
+              <span className="text-gray-400 text-sm">Slot {idx + 1}</span>
+            )}
           </div>
         ))}
       </div>
       <button
         onClick={finish}
-        disabled={!isOperator}
-        className={`px-6 py-2 rounded-xl text-white transition-colors ${
-          isOperator 
-            ? "bg-emerald-600 hover:bg-emerald-700" 
-            : "bg-gray-400 cursor-not-allowed"
-        }`}
+        className="px-6 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
       >
         Gerar Relatório
       </button>
@@ -518,16 +370,12 @@ function ArrangeStep({ grid, getPhoto, onDragStart, onDrop, finish, isOperator }
   );
 }
 
-function ReportStep({ finalList, descriptions, setDescriptions, exporting, setExporting, isOperator, syncState }) {
+function ReportStep({ finalList, descriptions, setDescriptions, exporting, setExporting }) {
   const handleChange = (id, val) => {
-    if (!isOperator) return;
-    const newDescriptions = { ...descriptions, [id]: val };
-    setDescriptions(newDescriptions);
-    syncState({ descriptions: newDescriptions });
+    setDescriptions((prev) => ({ ...prev, [id]: val }));
   };
 
   const exportPDF = async () => {
-    if (!isOperator) return;
     setExporting(true);
     const { jsPDF } = await import("jspdf");
     const pdf = new jsPDF({ orientation: "p", unit: "pt", format: "a4" });
@@ -587,11 +435,6 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
       <h2 className="text-2xl font-semibold mb-6 text-center">
         4. Relatório Final
       </h2>
-      {!isOperator && (
-        <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-6">
-          Aguardando o operador finalizar o relatório...
-        </div>
-      )}
       <div className="space-y-6">
         {finalList.map((p, i) => (
           <div
@@ -610,12 +453,9 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
               <textarea
                 rows="2"
                 placeholder="Digite características/descrição..."
-                disabled={!isOperator}
                 value={descriptions[p.id] || ""}
                 onChange={(e) => handleChange(p.id, e.target.value)}
-                className={`w-full border rounded-lg p-2 text-sm ${
-                  !isOperator ? 'bg-gray-100 cursor-not-allowed' : ''
-                }`}
+                className="w-full border rounded-lg p-2 text-sm"
               />
             </div>
           </div>
@@ -624,12 +464,8 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
       <div className="text-center mt-6">
         <button
           onClick={exportPDF}
-          disabled={exporting || !isOperator}
-          className={`px-6 py-2 rounded-xl text-white transition-colors ${
-            isOperator 
-              ? "bg-blue-600 hover:bg-blue-700" 
-              : "bg-gray-400 cursor-not-allowed"
-          } disabled:opacity-50`}
+          disabled={exporting}
+          className="px-6 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50"
         >
           {exporting ? "Gerando PDF…" : "Exportar PDF"}
         </button>
