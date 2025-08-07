@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Upload, Database } from "lucide-react";
+import { Upload } from "lucide-react";
 
 /**
  * PhotoSelectionApp – versão 6
@@ -27,42 +27,10 @@ export default function PhotoSelectionApp() {
   const [descriptions, setDescriptions] = useState({});
   const [exporting, setExporting] = useState(false);
   const fileInputRef = useRef();
-  const [usePreloaded, setUsePreloaded] = useState(false);
 
   /******************** HELPERS ********************/
   const shuffle = (array) => array.sort(() => Math.random() - 0.5);
   const getPhoto = (id) => photos.find((p) => p.id === id);
-
-  /******************** PRELOADED DATA ********************/
-  const loadPreloadedData = async () => {
-    try {
-      const response = await fetch('/sample-photos/photo-data.json');
-      const data = await response.json();
-      
-      // Create mock photos with Pexels images
-      const mockPhotos = data.photos.map((item, index) => ({
-        id: item.id,
-        file: null, // No actual file for preloaded
-        url: `https://images.pexels.com/photos/${1000000 + index}/pexels-photo-${1000000 + index}.jpeg?auto=compress&cs=tinysrgb&w=400`,
-        status: item.status,
-        filename: item.filename,
-        isPreloaded: true
-      }));
-      
-      // Set preloaded descriptions
-      const preloadedDescriptions = {};
-      data.photos.forEach(item => {
-        preloadedDescriptions[item.id] = item.description;
-      });
-      
-      setPhotos(shuffle(mockPhotos));
-      setDescriptions(preloadedDescriptions);
-      setStep(1);
-    } catch (error) {
-      console.error('Erro ao carregar dados pré-definidos:', error);
-      alert('Erro ao carregar dados pré-definidos. Use o upload manual.');
-    }
-  };
 
   /******************** UPLOAD ********************/
   const handleFiles = (files) => {
@@ -75,11 +43,6 @@ export default function PhotoSelectionApp() {
     }));
     setPhotos(shuffle(mapped));
     setStep(1);
-  };
-
-  const handlePreloadedStart = () => {
-    setUsePreloaded(true);
-    loadPreloadedData();
   };
 
   /******************** CLASSIFICATION ********************/
@@ -135,7 +98,6 @@ export default function PhotoSelectionApp() {
         <UploadStep handleFiles={handleFiles} fileInputRef={fileInputRef} />
       )}
 
-          onUsePreloaded={handlePreloadedStart}
       {step === 1 && photos.length > 0 && (
         <ClassificationStep
           photo={photos[currentIdx]}
@@ -183,40 +145,30 @@ export default function PhotoSelectionApp() {
 }
 
 /******************** COMPONENTES ********************/
-function UploadStep({ handleFiles, fileInputRef, onUsePreloaded }) {
+function UploadStep({ handleFiles, fileInputRef }) {
   return (
     <div className="text-center space-y-6 max-w-md mx-auto">
       <h1 className="text-3xl font-bold text-gray-800">Seleção de Fotos</h1>
-      <p className="text-gray-600">Escolha como deseja começar:</p>
-      
-      <div className="space-y-4">
-        {/* Upload Manual */}
-        <div className="bg-white p-6 rounded-xl shadow-lg border-2 border-dashed border-gray-300 hover:border-blue-400 transition-colors">
-          <Upload className="w-12 h-12 text-blue-500 mx-auto mb-3" />
-          <h2 className="text-xl font-semibold mb-2">Upload Manual</h2>
-          <p className="text-gray-500 mb-4">Envie suas próprias fotos (até 88)</p>
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            ref={fileInputRef}
-            onChange={(e) => handleFiles(e.target.files)}
-            className="block mx-auto text-sm"
-          />
-        </div>
-        
-        {/* Dados Pré-carregados */}
-        <div className="bg-white p-6 rounded-xl shadow-lg border-2 border-gray-300 hover:border-green-400 transition-colors">
-          <Database className="w-12 h-12 text-green-500 mx-auto mb-3" />
-          <h2 className="text-xl font-semibold mb-2">Dados de Exemplo</h2>
-          <p className="text-gray-500 mb-4">Use fotos e descrições pré-definidas</p>
-          <button
-            onClick={onUsePreloaded}
-            className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
-          >
-            Usar Exemplo
-          </button>
-        </div>
+      <p className="text-gray-600">
+        Faça upload de até 88 fotos para classificação e seleção
+      </p>
+      <div
+        className="bg-white p-8 rounded-xl shadow-lg border-2 border-dashed border-gray-300 hover:border-blue-400 transition-colors cursor-pointer"
+        onClick={() => fileInputRef.current?.click()}
+      >
+        <Upload className="w-16 h-16 text-blue-500 mx-auto mb-4" />
+        <p className="text-lg font-medium mb-2">Clique para selecionar fotos</p>
+        <p className="text-sm text-gray-500">
+          Ou arraste e solte suas imagens aqui
+        </p>
+        <input
+          type="file"
+          accept="image/*"
+          multiple
+          ref={fileInputRef}
+          onChange={(e) => handleFiles(e.target.files)}
+          className="hidden"
+        />
       </div>
     </div>
   );
@@ -375,7 +327,7 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
 
     for (let i = 0; i < finalList.length; i++) {
       const p = finalList[i];
-      const name = p.filename || p.file?.name?.replace(/\.[^/.]+$/, "") || `Foto ${i + 1}`;
+      const name = p.file?.name?.replace(/\.[^/.]+$/, "") || `Foto ${i + 1}`;
       const statusLabel = p.status === "positive" ? "Positiva" : "Negativa";
       const desc = descriptions[p.id] || "";
 
@@ -391,17 +343,8 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
 
       // Add image
       try {
-        if (p.file) {
-          const dataURL = await fileToDataURL(p.file);
-          pdf.addImage(dataURL, "JPEG", margin, y, thumb, thumb);
-        } else if (p.isPreloaded) {
-          // For preloaded images, we'll add a placeholder or skip the image
-          pdf.setFillColor(240, 240, 240);
-          pdf.rect(margin, y, thumb, thumb, 'F');
-          pdf.setFontSize(8);
-          pdf.setTextColor("#666");
-          pdf.text("Imagem de\nExemplo", margin + thumb/2, y + thumb/2, { align: 'center' });
-        }
+        const dataURL = await fileToDataURL(p.file);
+        pdf.addImage(dataURL, "JPEG", margin, y, thumb, thumb);
       } catch {
         // ignore image errors
       }
@@ -437,13 +380,13 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
             className="flex flex-col sm:flex-row items-center gap-4 bg-white shadow rounded-lg p-4"
           >
             <img
-              src={p.isPreloaded ? p.url : URL.createObjectURL(p.file)}
+              src={URL.createObjectURL(p.file)}
               alt={`sel_${i}`}
               className="h-24 w-24 object-cover rounded-lg border"
             />
             <div className="flex-1 w-full">
               <h3 className="font-medium text-lg truncate mb-2">
-                {p.filename || p.file?.name?.replace(/\.[^/.]+$/, "") || `Foto ${i + 1}`}
+                {p.file?.name?.replace(/\.[^/.]+$/, "") || `Foto ${i + 1}`}
               </h3>
               <textarea
                 rows="2"
