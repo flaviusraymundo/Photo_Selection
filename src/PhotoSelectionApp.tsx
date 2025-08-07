@@ -2,37 +2,32 @@ import React, { useState, useRef, useEffect } from "react";
 import { Upload } from "lucide-react";
 
 /**
- * PhotoSelectionApp – versão 6
+ * PhotoSelectionApp – versão estável 🟢
  *
- * 👉  Foco desta versão: confiabilidade da exportação em PDF
- * -----------------------------------------------------------
- * • Constrói o PDF com jsPDF (sem html2canvas) gerando texto nítido e
- *   sem caixas estranhas. Miniatura em­bedada via FileReader (sem CORS).
- * • Tratamento de descrições muito longas: quebra automática e continua
- *   em nova página se necessário.
- * • Indicador de progresso enquanto o PDF é montado.
- * • Pequenas melhorias de layout (ex. remove borda de <textarea> na DOM
- *   para evitar confusão visual, mas a borda continua no componente).
+ * • Upload de até 88 fotos (embaralhadas).
+ * • Classificação positiva/negativa/neutra com atalhos (+, -, qualquer).
+ * • Seleção de 7 fotos mais impactantes.
+ * • Arranjo em 12 slots (3×4) com drag-and-drop.
+ * • Relatório final editável e exportação em PDF via jsPDF.
  *
- * Dependência: `npm i jspdf` (nenhuma outra). Caso já tenha html2canvas
- * instalado, não há problema, ele só não é mais usado.
+ * Dependência extra:  npm i jspdf
  */
 
 export default function PhotoSelectionApp() {
   const [step, setStep] = useState(0);
-  const [photos, setPhotos] = useState([]); // { id, file, url, status }
+  const [photos, setPhotos] = useState([]);            // { id, file, url, status }
   const [currentIdx, setCurrentIdx] = useState(0);
-  const [chosen, setChosen] = useState([]);
-  const [grid, setGrid] = useState(Array(12).fill(null));
-  const [descriptions, setDescriptions] = useState({});
+  const [chosen, setChosen] = useState([]);            // ids das 7
+  const [grid, setGrid]   = useState(Array(12).fill(null)); // 12 slots
+  const [descriptions, setDescriptions] = useState({}); // { id: texto }
   const [exporting, setExporting] = useState(false);
   const fileInputRef = useRef();
 
-  /******************** HELPERS ********************/
-  const shuffle = (array) => array.sort(() => Math.random() - 0.5);
+  /*************** helpers ***************/
+  const shuffle = (arr) => arr.sort(() => Math.random() - 0.5);
   const getPhoto = (id) => photos.find((p) => p.id === id);
 
-  /******************** UPLOAD ********************/
+  /*************** upload ***************/
   const handleFiles = (files) => {
     const arr = Array.from(files).slice(0, 88);
     const mapped = arr.map((f, i) => ({
@@ -45,7 +40,7 @@ export default function PhotoSelectionApp() {
     setStep(1);
   };
 
-  /******************** CLASSIFICATION ********************/
+  /*************** classificação ***************/
   const classify = (status) => {
     setPhotos((prev) => {
       const clone = [...prev];
@@ -56,19 +51,20 @@ export default function PhotoSelectionApp() {
     else setStep(2);
   };
 
+  // atalhos de teclado
   useEffect(() => {
-    const handler = (e) => {
+    const h = (e) => {
       if (step !== 1) return;
       if (["+", "="].includes(e.key)) classify("positive");
       else if (["-", "_"].includes(e.key)) classify("negative");
       else if (e.key === "ArrowLeft") setCurrentIdx((i) => (i > 0 ? i - 1 : 0));
       else classify("neutral");
     };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
   }, [step, currentIdx, photos.length]);
 
-  /******************** SELECTION (7) ********************/
+  /*************** seleção ***************/
   const toggleChosen = (id) => {
     setChosen((prev) => {
       if (prev.includes(id)) return prev.filter((x) => x !== id);
@@ -77,11 +73,11 @@ export default function PhotoSelectionApp() {
     });
   };
 
-  /******************** DRAG & DROP (12 slots) ********************/
+  /*************** drag-and-drop ***************/
   const onDragStart = (e, from) => e.dataTransfer.setData("from", from);
   const onDrop = (e, to) => {
     const from = parseInt(e.dataTransfer.getData("from"));
-    if (isNaN(from) || from === to) return;
+    if (Number.isNaN(from) || from === to) return;
     setGrid((prev) => {
       const clone = [...prev];
       [clone[from], clone[to]] = [clone[to], clone[from]];
@@ -89,8 +85,8 @@ export default function PhotoSelectionApp() {
     });
   };
 
-  /******************** REPORT PREP ********************/
-  const finalList = grid.filter(Boolean).map((id) => getPhoto(id));
+  /*************** relatório ***************/
+  const finalList = grid.filter(Boolean).map(getPhoto);
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 flex flex-col items-center">
@@ -144,7 +140,8 @@ export default function PhotoSelectionApp() {
   );
 }
 
-/******************** COMPONENTES ********************/
+/* ---------- componentes ---------- */
+
 function UploadStep({ handleFiles, fileInputRef }) {
   return (
     <div className="text-center space-y-6 max-w-md mx-auto">
@@ -181,7 +178,7 @@ function ClassificationStep({ photo, idx, total, classify, goBack }) {
       <div className="h-96 flex items-center justify-center">
         <img
           src={photo.url}
-          alt="current"
+          alt="preview"
           className="max-h-full max-w-full object-contain rounded-lg shadow-lg"
         />
       </div>
@@ -215,93 +212,44 @@ function ClassificationStep({ photo, idx, total, classify, goBack }) {
         </button>
       </div>
       <p className="text-sm text-gray-500">
-        Use ← para voltar. Atalhos: +/=: positiva, -/_: negativa, outra tecla:
-        neutra.
+        Use ← para voltar. Atalhos: +/=: positiva, -/_: negativa, outra tecla: neutra.
       </p>
     </div>
   );
 }
 
 function SelectionStep({ photos, chosen, toggleChosen, proceed }) {
-  const positivePhotos = photos.filter(p => p.status === "positive");
-  const negativePhotos = photos.filter(p => p.status === "negative");
-  
   return (
     <div className="w-full max-w-5xl">
       <h2 className="text-xl font-semibold mb-4 text-center">
         2. Selecione as 7 fotos mais impactantes ({chosen.length}/7 selecionadas)
       </h2>
-      
-      {positivePhotos.length > 0 && (
-        <div className="mb-6">
-          <h3 className="text-lg font-medium mb-3 text-green-600">Fotos Positivas ({positivePhotos.length})</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {positivePhotos.map((p) => (
-              <div
-                key={p.id}
-                onClick={() => toggleChosen(p.id)}
-                className={`relative cursor-pointer rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow ${
-                  chosen.includes(p.id) ? "ring-4 ring-blue-500" : ""
-                }`}
-              >
-                <img
-                  src={p.url}
-                  alt="option"
-                  className="h-36 w-full object-cover"
-                />
-                <span className="absolute top-2 left-2 bg-green-500 text-white px-2 py-1 text-xs rounded font-medium">
-                  +
-                </span>
-                {chosen.includes(p.id) && (
-                  <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
-                    <div className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
-                      {chosen.indexOf(p.id) + 1}
-                    </div>
-                  </div>
-                )}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {photos.map((p) => (
+          <div
+            key={p.id}
+            onClick={() => toggleChosen(p.id)}
+            className={`relative cursor-pointer rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow ${
+              chosen.includes(p.id) ? "ring-4 ring-blue-500" : ""
+            }`}
+          >
+            <img src={p.url} alt="option" className="h-36 w-full object-cover" />
+            <span className={`absolute top-2 left-2 px-2 py-1 text-xs rounded font-medium text-white ${
+              p.status === "positive" ? "bg-green-500" : "bg-red-500"
+            }`}>
+              {p.status === "positive" ? "+" : "-"}
+            </span>
+            {chosen.includes(p.id) && (
+              <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
+                <div className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
+                  {chosen.indexOf(p.id) + 1}
+                </div>
               </div>
-            ))}
+            )}
           </div>
-        </div>
-      )}
-      
-      {negativePhotos.length > 0 && (
-        <div className="mb-6">
-          <h3 className="text-lg font-medium mb-3 text-red-600">Fotos Negativas ({negativePhotos.length})</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {negativePhotos.map((p) => (
-              <div
-                key={p.id}
-                onClick={() => toggleChosen(p.id)}
-                className={`relative cursor-pointer rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow ${
-                  chosen.includes(p.id) ? "ring-4 ring-blue-500" : ""
-                }`}
-              >
-                <img
-                  src={p.url}
-                  alt="option"
-                  className="h-36 w-full object-cover"
-                />
-                <span className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 text-xs rounded font-medium">
-                  -
-                </span>
-                {chosen.includes(p.id) && (
-                  <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
-                    <div className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
-                      {chosen.indexOf(p.id) + 1}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-      
+        ))}
+      </div>
       <div className="text-center mt-6">
-        <p className="text-sm text-gray-600 mb-4">
-          Clique nas fotos para selecioná-las. Você precisa escolher exatamente 7 fotos.
-        </p>
         <button
           disabled={chosen.length !== 7}
           onClick={proceed}
@@ -365,14 +313,14 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
     const { jsPDF } = await import("jspdf");
     const pdf = new jsPDF({ orientation: "p", unit: "pt", format: "a4" });
     const margin = 40;
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
 
-    const thumb = 72; // thumbnail size in pt (~1 inch)
-    const lineHeight = 14;
+    const thumb = 72;         // 1 polegada
+    const lineH = 14;
     let y = margin;
 
-    // Helper: convert File/Blob to DataURL
+    // converter arquivo para dataURL
     const fileToDataURL = (file) =>
       new Promise((res) => {
         const reader = new FileReader();
@@ -381,42 +329,34 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
       });
 
     for (let i = 0; i < finalList.length; i++) {
-      const p = finalList[i];
+      const p   = finalList[i];
       const name = p.file?.name?.replace(/\.[^/.]+$/, "") || `Foto ${i + 1}`;
-      const statusLabel = p.status === "positive" ? "Positiva" : "Negativa";
+      const statusTxt = p.status === "positive" ? "Positiva" : "Negativa";
       const desc = descriptions[p.id] || "";
 
-      // Word-wrapped description
-      const maxTextWidth = pageWidth - margin * 2 - thumb - 10;
-      const wrappedDesc = pdf.splitTextToSize(desc, maxTextWidth);
-      const blockHeight = Math.max(thumb, (2 + wrappedDesc.length) * lineHeight);
+      const maxW = pageW - margin*2 - thumb - 10;
+      const wrapped = pdf.splitTextToSize(desc, maxW);
+      const blockH = Math.max(thumb, (2 + wrapped.length) * lineH);
 
-      if (y + blockHeight > pageHeight - margin) {
-        pdf.addPage();
-        y = margin;
+      if (y + blockH > pageH - margin) {
+        pdf.addPage(); y = margin;
       }
 
-      // Add image
       try {
         const dataURL = await fileToDataURL(p.file);
         pdf.addImage(dataURL, "JPEG", margin, y, thumb, thumb);
-      } catch {
-        // ignore image errors
-      }
+      } catch {}
 
-      // Add text
-      pdf.setFontSize(12);
-      pdf.setTextColor("#000");
-      pdf.text(`${i + 1}. ${name}`, margin + thumb + 10, y + lineHeight);
+      pdf.setFontSize(12).setTextColor("#000");
+      pdf.text(`${i + 1}. ${name}`, margin + thumb + 10, y + lineH);
 
-      pdf.setFontSize(10);
-      pdf.setTextColor(p.status === "positive" ? "#22c55e" : "#ef4444");
-      pdf.text(statusLabel, margin + thumb + 10, y + lineHeight * 2);
+      pdf.setFontSize(10)
+         .setTextColor(p.status === "positive" ? "#22c55e" : "#ef4444")
+         .text(statusTxt, margin + thumb + 10, y + lineH*2);
 
-      pdf.setTextColor("#000");
-      pdf.text(wrappedDesc, margin + thumb + 10, y + lineHeight * 3);
+      pdf.setTextColor("#000").text(wrapped, margin + thumb + 10, y + lineH*3);
 
-      y += blockHeight + 20;
+      y += blockH + 20;
     }
 
     pdf.save("selecao.pdf");
