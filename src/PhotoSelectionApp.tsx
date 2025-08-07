@@ -355,7 +355,7 @@ function ArrangeStep({ grid, getPhoto, onDragStart, onDrop, finish }) {
                 className="max-h-full max-w-full object-contain"
               />
             ) : (
-              <span className="text-gray-400 text-sm">Slot {idx + 1}</span>
+              null
             )}
           </div>
         ))}
