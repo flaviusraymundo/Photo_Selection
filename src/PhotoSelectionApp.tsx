@@ -223,40 +223,95 @@ function ClassificationStep({ photo, idx, total, classify, goBack }) {
 }
 
 function SelectionStep({ photos, chosen, toggleChosen, proceed }) {
+  const positivePhotos = photos.filter(p => p.status === "positive");
+  const negativePhotos = photos.filter(p => p.status === "negative");
+  
   return (
     <div className="w-full max-w-5xl">
       <h2 className="text-xl font-semibold mb-4 text-center">
-        2. Selecione as 7 fotos mais impactantes
+        2. Selecione as 7 fotos mais impactantes ({chosen.length}/7 selecionadas)
       </h2>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {photos.map((p) => (
-          <div
-            key={p.id}
-            onClick={() => toggleChosen(p.id)}
-            className={`relative cursor-pointer rounded-lg overflow-hidden shadow ${
-              chosen.includes(p.id) ? "ring-4 ring-blue-500" : ""
-            }`}
-          >
-            <img
-              src={p.url}
-              alt="option"
-              className="h-36 w-full object-cover"
-            />
-            <span className="absolute top-1 left-1 bg-white/80 px-1.5 text-xs rounded">
-              {p.status === "positive" ? "+" : "-"}
-            </span>
+      
+      {positivePhotos.length > 0 && (
+        <div className="mb-6">
+          <h3 className="text-lg font-medium mb-3 text-green-600">Fotos Positivas ({positivePhotos.length})</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {positivePhotos.map((p) => (
+              <div
+                key={p.id}
+                onClick={() => toggleChosen(p.id)}
+                className={`relative cursor-pointer rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow ${
+                  chosen.includes(p.id) ? "ring-4 ring-blue-500" : ""
+                }`}
+              >
+                <img
+                  src={p.url}
+                  alt="option"
+                  className="h-36 w-full object-cover"
+                />
+                <span className="absolute top-2 left-2 bg-green-500 text-white px-2 py-1 text-xs rounded font-medium">
+                  +
+                </span>
+                {chosen.includes(p.id) && (
+                  <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
+                    <div className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
+                      {chosen.indexOf(p.id) + 1}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </div>
+      )}
+      
+      {negativePhotos.length > 0 && (
+        <div className="mb-6">
+          <h3 className="text-lg font-medium mb-3 text-red-600">Fotos Negativas ({negativePhotos.length})</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {negativePhotos.map((p) => (
+              <div
+                key={p.id}
+                onClick={() => toggleChosen(p.id)}
+                className={`relative cursor-pointer rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow ${
+                  chosen.includes(p.id) ? "ring-4 ring-blue-500" : ""
+                }`}
+              >
+                <img
+                  src={p.url}
+                  alt="option"
+                  className="h-36 w-full object-cover"
+                />
+                <span className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 text-xs rounded font-medium">
+                  -
+                </span>
+                {chosen.includes(p.id) && (
+                  <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
+                    <div className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
+                      {chosen.indexOf(p.id) + 1}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      
       <div className="text-center mt-6">
+        <p className="text-sm text-gray-600 mb-4">
+          Clique nas fotos para selecioná-las. Você precisa escolher exatamente 7 fotos.
+        </p>
         <button
           disabled={chosen.length !== 7}
           onClick={proceed}
-          className={`px-6 py-2 rounded-xl text-white ${
-            chosen.length === 7 ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-400"
+          className={`px-8 py-3 rounded-xl text-white font-medium transition-colors ${
+            chosen.length === 7 
+              ? "bg-blue-600 hover:bg-blue-700 cursor-pointer" 
+              : "bg-gray-400 cursor-not-allowed"
           }`}
         >
-          Continuar
+          {chosen.length === 7 ? "Continuar para Organização" : `Selecione ${7 - chosen.length} foto(s)`}
         </button>
       </div>
     </div>
