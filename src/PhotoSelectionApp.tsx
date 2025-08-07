@@ -283,6 +283,7 @@ function ArrangeStep({ grid, getPhoto, onDragStart, onDrop, finish }) {
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => onDrop(e, idx)}
             className="aspect-[4/3] w-full h-48 rounded-lg flex items-center justify-center overflow-hidden bg-gray-50 hover:bg-gray-100 transition-colors"
+            className="aspect-[4/3] w-full h-64 rounded-lg flex items-center justify-center overflow-hidden bg-gray-50 hover:bg-gray-100 transition-colors"
           >
             {id ? (
               <img
