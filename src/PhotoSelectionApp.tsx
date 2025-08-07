@@ -21,6 +21,7 @@ export default function PhotoSelectionApp() {
   const [grid, setGrid]   = useState(Array(12).fill(null)); // 12 slots
   const [descriptions, setDescriptions] = useState({}); // { id: texto }
   const [exporting, setExporting] = useState(false);
+  const [previewPhoto, setPreviewPhoto] = useState(null); // para modal de preview
   const fileInputRef = useRef();
 
   /*************** helpers ***************/
@@ -111,6 +112,7 @@ export default function PhotoSelectionApp() {
           photos={photos.filter((p) => p.status !== "neutral")}
           chosen={chosen}
           toggleChosen={toggleChosen}
+          setPreviewPhoto={setPreviewPhoto}
           proceed={() => {
             const base = [...chosen, ...Array(20 - chosen.length).fill(null)];
             setGrid(base);
@@ -136,6 +138,16 @@ export default function PhotoSelectionApp() {
           setDescriptions={setDescriptions}
           exporting={exporting}
           setExporting={setExporting}
+        />
+      )}
+
+      {/* Modal de Preview */}
+      {previewPhoto && (
+        <PhotoPreviewModal 
+          photo={previewPhoto} 
+          onClose={() => setPreviewPhoto(null)}
+          chosen={chosen}
+          toggleChosen={toggleChosen}
         />
       )}
     </div>
@@ -220,33 +232,49 @@ function ClassificationStep({ photo, idx, total, classify, goBack }) {
   );
 }
 
-function SelectionStep({ photos, chosen, toggleChosen, proceed }) {
+function SelectionStep({ photos, chosen, toggleChosen, setPreviewPhoto, proceed }) {
   return (
     <div className="w-full max-w-5xl">
       <h2 className="text-xl font-semibold mb-4 text-center">
         2. Selecione as 7 fotos mais impactantes ({chosen.length}/7 selecionadas)
       </h2>
+      <p className="text-sm text-gray-500 text-center mb-4">
+        Clique em qualquer foto para visualizá-la em tamanho grande
+      </p>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
         {photos.map((p) => (
           <div
             key={p.id}
-            onClick={() => toggleChosen(p.id)}
             className={`relative cursor-pointer rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow ${
               chosen.includes(p.id) ? "ring-4 ring-blue-500" : ""
             }`}
           >
-            <img src={p.url} alt="option" className="h-48 w-full object-contain bg-gray-50" />
+            <img 
+              src={p.url} 
+              alt="option" 
+              className="h-48 w-full object-contain bg-gray-50"
+              onClick={() => setPreviewPhoto(p)}
+            />
             <span className={`absolute top-2 left-2 px-2 py-1 text-xs rounded font-medium text-white ${
               p.status === "positive" ? "bg-green-500" : "bg-red-500"
             }`}>
               {p.status === "positive" ? "+" : "-"}
             </span>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleChosen(p.id);
+              }}
+              className={`absolute bottom-2 right-2 w-8 h-8 rounded-full font-bold text-sm transition-colors ${
+                chosen.includes(p.id) 
+                  ? "bg-blue-500 text-white" 
+                  : "bg-white text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              {chosen.includes(p.id) ? chosen.indexOf(p.id) + 1 : "+"}
+            </button>
             {chosen.includes(p.id) && (
-              <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
-                <div className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
-                  {chosen.indexOf(p.id) + 1}
-                </div>
-              </div>
+              <div className="absolute inset-0 bg-blue-500/20 pointer-events-none" />
             )}
           </div>
         ))}
@@ -282,7 +310,6 @@ function ArrangeStep({ grid, getPhoto, onDragStart, onDrop, finish }) {
             onDragStart={(e) => id && onDragStart(e, idx)}
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => onDrop(e, idx)}
-            className="aspect-[4/3] w-full h-48 rounded-lg flex items-center justify-center overflow-hidden bg-gray-50 hover:bg-gray-100 transition-colors"
             className="aspect-[4/3] w-full h-64 rounded-lg flex items-center justify-center overflow-hidden bg-gray-50 hover:bg-gray-100 transition-colors"
           >
             {id ? (
@@ -403,6 +430,77 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
         >
           {exporting ? "Gerando PDF…" : "Exportar PDF"}
         </button>
+      </div>
+    </div>
+  );
+}
+
+function PhotoPreviewModal({ photo, onClose, chosen, toggleChosen }) {
+  // Fechar modal com ESC
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [onClose]);
+
+  return (
+    <div 
+      className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+      onClick={onClose}
+    >
+      <div 
+        className="relative max-w-4xl max-h-[90vh] bg-white rounded-lg overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b bg-gray-50">
+          <div className="flex items-center gap-3">
+            <span className={`px-2 py-1 text-xs rounded font-medium text-white ${
+              photo.status === "positive" ? "bg-green-500" : "bg-red-500"
+            }`}>
+              {photo.status === "positive" ? "Positiva" : "Negativa"}
+            </span>
+            <span className="text-sm text-gray-600 truncate">
+              {photo.file?.name || "Foto"}
+            </span>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 text-xl font-bold w-8 h-8 flex items-center justify-center"
+          >
+            ×
+          </button>
+        </div>
+
+        {/* Imagem */}
+        <div className="flex items-center justify-center p-4 bg-gray-50">
+          <img
+            src={photo.url}
+            alt="preview"
+            className="max-w-full max-h-[70vh] object-contain"
+          />
+        </div>
+
+        {/* Footer com ações */}
+        <div className="flex items-center justify-between p-4 border-t bg-gray-50">
+          <div className="text-sm text-gray-600">
+            Pressione ESC ou clique fora para fechar
+          </div>
+          <button
+            onClick={() => toggleChosen(photo.id)}
+            className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+              chosen.includes(photo.id)
+                ? "bg-red-500 text-white hover:bg-red-600"
+                : "bg-blue-500 text-white hover:bg-blue-600"
+            }`}
+          >
+            {chosen.includes(photo.id) 
+              ? `Remover (${chosen.indexOf(photo.id) + 1}/7)` 
+              : `Selecionar (${chosen.length}/7)`}
+          </button>
+        </div>
       </div>
     </div>
   );
