@@ -235,7 +235,7 @@ function SelectionStep({ photos, chosen, toggleChosen, proceed }) {
               chosen.includes(p.id) ? "ring-4 ring-blue-500" : ""
             }`}
           >
-            <img src={p.url} alt="option" className="h-48 w-full object-cover" />
+            <img src={p.url} alt="option" className="h-48 w-full object-contain bg-gray-50" />
             <span className={`absolute top-2 left-2 px-2 py-1 text-xs rounded font-medium text-white ${
               p.status === "positive" ? "bg-green-500" : "bg-red-500"
             }`}>
@@ -290,9 +290,7 @@ function ArrangeStep({ grid, getPhoto, onDragStart, onDrop, finish }) {
                 alt="slot"
                 className="max-h-full max-w-full object-contain"
               />
-            ) : (
-              <span className="text-gray-300 text-sm">vazio</span>
-            )}
+            ) : null}
           </div>
         ))}
       </div>
