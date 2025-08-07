@@ -22,6 +22,13 @@ export default function PhotoSelectionApp() {
   const [descriptions, setDescriptions] = useState({}); // { id: texto }
   const [exporting, setExporting] = useState(false);
   const [previewPhoto, setPreviewPhoto] = useState(null); // para modal de preview
+  const [previewPhoto, setPreviewPhoto] = useState(null); // para modal de preview
+  const [previewPhoto, setPreviewPhoto] = useState(null); // para modal de preview
+  const [previewPhoto, setPreviewPhoto] = useState(null); // para modal de preview
+  const [previewPhoto, setPreviewPhoto] = useState(null); // para modal de preview
+  const [previewPhoto, setPreviewPhoto] = useState(null); // para modal de preview
+  const [previewPhoto, setPreviewPhoto] = useState(null); // para modal de preview
+  const [previewPhoto, setPreviewPhoto] = useState(null); // para modal de preview
   const fileInputRef = useRef();
 
   /*************** helpers ***************/
