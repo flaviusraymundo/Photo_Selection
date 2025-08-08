@@ -377,23 +377,30 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
   useEffect(() => {
     if (!finalList.length) return;       // nada a fazer
 
-    // Construímos um mapa só uma vez p/ lookup rápido
-    const index = {};
-    Object.entries(photoDescriptions).forEach(([title, description]) => {
-      index[slug(title)] = description;        // ex.: "antiseptic-bush" -> "..."
+    // Construímos um mapa com palavras-chave para matching mais flexível
+    const keywordMap = {};
+    Object.entries(photoDescriptions).forEach(([key, description]) => {
+      // Extrair palavras-chave principais de cada entrada do JSON
+      const keywords = key.toLowerCase().split(/[\s-_]+/);
+      keywordMap[key] = { keywords, description };
     });
 
     setDescriptions(prev => {
       const next = { ...prev };
 
       finalList.forEach(p => {
-        const base = slug(p.file?.name ?? "");   // nome "limpo" da foto
+        const fileName = (p.file?.name ?? "").toLowerCase().replace(/\.[^/.]+$/, "");
         if (next[p.id]) return;                 // já preenchido manualmente
 
-        // procura por correspondência exata ou inclusiva
-        Object.keys(index).forEach(key => {
-          if (base.includes(key) || key.includes(base)) {
-            next[p.id] = index[key];
+        // Procura por correspondência de palavras-chave
+        Object.entries(keywordMap).forEach(([key, { keywords, description }]) => {
+          // Verifica se pelo menos 2 palavras-chave batem (ou 1 se for palavra única)
+          const matches = keywords.filter(keyword => 
+            fileName.includes(keyword) && keyword.length > 2 // ignora palavras muito pequenas
+          );
+          
+          if (matches.length >= Math.min(2, keywords.length)) {
+            next[p.id] = description;
           }
         });
       });
@@ -403,15 +410,6 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
   }, [finalList]);
   // ----------------------------------------------------------------------
 
-  /** Normaliza strings: lower case, sem extensão, tira acentos, troca
-   *  espaços/underscores por hífens – facilita matching.               */
-  function slug(str) {
-    return str
-      .toLowerCase()
-      .replace(/\.[^/.]+$/, "")               // remove extensão
-      .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // remove acentos
-      .replace(/[_\s]+/g, "-");              // espaços/_ -> hífen
-  }
 
   const exportPDF = async () => {
     setExporting(true);
