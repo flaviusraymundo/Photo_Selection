@@ -397,58 +397,23 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
               const fileNameClean = fileName.replace(/\.[^/.]+$/, ''); // remove extensão
               console.log('Processing file:', fileName, '-> clean:', fileNameClean);
               
-              // Procurar match no JSON com prioridade para matches mais específicos
+              // Procurar APENAS match exato 100%
               let matchedFlower = null;
               let matchedKey = null;
-               let matchScore = 0;
-             
-              // Buscar o melhor match possível
+              
+              // Buscar apenas match exato
               Object.entries(flowerData).forEach(([key, flower]) => {
-                let currentScore = 0;
-                
-                // 1. Match exato da chave (pontuação máxima)
+                // APENAS match exato da chave
                 if (fileNameClean === key) {
-                  currentScore = 1000;
-                }
-                // 2. Nome do arquivo contém a chave completa
-                else if (fileNameClean.includes(key)) {
-                  currentScore = 500 + key.length; // Prefere chaves mais longas
-                }
-                // 3. Chave contém o nome do arquivo
-                else if (key.includes(fileNameClean) && fileNameClean.length > 3) {
-                  currentScore = 300 + fileNameClean.length;
-                }
-                // 4. Match por palavras do título
-                else {
-                  const flowerTitle = flower.title?.toLowerCase() || '';
-                  const titleWords = flowerTitle.split(' ').filter(word => word.length > 2);
-                  const fileWords = fileNameClean.split(/[_\s-]+/).filter(word => word.length > 2);
-                  
-                  let wordMatches = 0;
-                  titleWords.forEach(titleWord => {
-                    fileWords.forEach(fileWord => {
-                      if (titleWord.includes(fileWord) || fileWord.includes(titleWord)) {
-                        wordMatches++;
-                      }
-                    });
-                  });
-                  
-                  if (wordMatches > 0) {
-                    currentScore = wordMatches * 50;
-                  }
-                }
-                
-                // Atualiza se encontrou um match melhor
-                if (currentScore > matchScore) {
-                  matchScore = currentScore;
                   matchedFlower = flower;
                   matchedKey = key;
+                  return; // Para no primeiro match exato
                 }
               });
               
               if (matchedFlower) {
                 next[photo.id] = `${matchedFlower.title}\n\n${matchedFlower.description}`;
-                console.log('Description set for:', fileName, 'using:', matchedKey, 'score:', matchScore);
+                console.log('Description set for:', fileName, 'using:', matchedKey, '(EXACT MATCH)');
               } else {
                 console.log('No match found for:', fileName);
               }
