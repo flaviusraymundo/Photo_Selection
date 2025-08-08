@@ -360,7 +360,7 @@ function WelcomeStep({ startProcess }) {
           <div className="space-y-1">
             <p>• <strong>Etapa 1:</strong> Relembrando a situação/problema: classificar as 88 fotos em (Positivas, Negativas ou Neutras)</p>
             <p>• <strong>Etapa 2:</strong> Selecionar as fotos mais impactantes</p>
-            <p>• <strong>Etapa 3:</strong> Diagnóstico</p>
+            <p>• <strong>Etapa 3:</strong> Interpretação do Diagnóstico</p>
             <p>• <strong>Etapa 4:</strong> Gerar relatório em PDF</p>
           </div>
         </div>
