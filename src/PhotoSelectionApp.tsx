@@ -383,7 +383,9 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
     const loadDescriptions = async () => {
       try {
         const response = await fetch('/photoDescriptions.json');
+        console.log('Response status:', response.status);
         const flowerData = await response.json();
+        console.log('Loaded flower data:', Object.keys(flowerData));
         
         setDescriptions(prev => {
           const next = { ...prev };
@@ -392,29 +394,53 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
             // Só preenche se não tem descrição ainda
             if (!next[photo.id]) {
               const fileName = photo.file?.name?.toLowerCase() || '';
-             const fileNameClean = fileName.replace(/\.[^/.]+$/, ''); // remove extensão
+              const fileNameClean = fileName.replace(/\.[^/.]+$/, ''); // remove extensão
+              console.log('Processing file:', fileName, '-> clean:', fileNameClean);
               
-             // Procurar match no JSON - primeiro por chave exata, depois por palavras
-             let matchedFlower = null;
+              // Procurar match no JSON - primeiro por chave exata, depois por palavras
+              let matchedFlower = null;
+              let matchedKey = null;
              
-             // 1. Busca por chave exata (ex: "macrozamia.jpg" -> "macrozamia")
-             if (flowerData[fileNameClean]) {
-               matchedFlower = flowerData[fileNameClean];
-             } else {
-               // 2. Busca por palavras do título no nome do arquivo
-               matchedFlower = Object.values(flowerData).find(flower => {
-                 const flowerTitle = flower.title?.toLowerCase() || '';
-                 const flowerWords = flowerTitle.split(' ');
-                 
-                 // Verifica se alguma palavra do título está no nome do arquivo
-                 return flowerWords.some(word => 
-                   word.length > 2 && fileNameClean.includes(word)
-                 );
-               });
-             }
+              // 1. Busca por chave exata (ex: "macrozamia.jpg" -> "macrozamia")
+              if (flowerData[fileNameClean]) {
+                matchedFlower = flowerData[fileNameClean];
+                matchedKey = fileNameClean;
+                console.log('Exact match found:', matchedKey);
+              } else {
+                // 2. Busca por chave que contenha parte do nome do arquivo
+                Object.keys(flowerData).forEach(key => {
+                  if (fileNameClean.includes(key) || key.includes(fileNameClean)) {
+                    matchedFlower = flowerData[key];
+                    matchedKey = key;
+                    console.log('Key match found:', key, 'for file:', fileNameClean);
+                  }
+                });
+                
+                // 3. Busca por palavras do título no nome do arquivo
+                if (!matchedFlower) {
+                  Object.entries(flowerData).forEach(([key, flower]) => {
+                    const flowerTitle = flower.title?.toLowerCase() || '';
+                    const flowerWords = flowerTitle.split(' ');
+                    
+                    // Verifica se alguma palavra do título está no nome do arquivo
+                    const hasMatch = flowerWords.some(word => 
+                      word.length > 2 && (fileNameClean.includes(word) || word.includes(fileNameClean))
+                    );
+                    
+                    if (hasMatch && !matchedFlower) {
+                      matchedFlower = flower;
+                      matchedKey = key;
+                      console.log('Title match found:', key, 'for file:', fileNameClean);
+                    }
+                  });
+                }
+              }
               
               if (matchedFlower) {
                 next[photo.id] = `${matchedFlower.title}\n\n${matchedFlower.description}`;
+                console.log('Description set for:', fileName, 'using:', matchedKey);
+              } else {
+                console.log('No match found for:', fileName);
               }
             }
           });
@@ -423,16 +449,6 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
         });
       } catch (error) {
         console.error('Erro ao carregar descrições:', error);
-        // Fallback em caso de erro
-        setDescriptions(prev => {
-          const next = { ...prev };
-          finalList.forEach(photo => {
-            if (!next[photo.id]) {
-              next[photo.id] = `Essência Floral\n\nDescrição para ${photo.file?.name || 'esta foto'}.`;
-            }
-          });
-          return next;
-        });
       }
     };
 
