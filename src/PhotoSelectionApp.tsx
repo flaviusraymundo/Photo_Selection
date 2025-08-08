@@ -27,6 +27,48 @@ export default function PhotoSelectionApp() {
   const fileInputRef = useRef();
   const arrangeAreaRef = useRef();
 
+  // Lista das 88 fotos na pasta sample-photos
+  const samplePhotoNames = [
+    "Anticeptic Bush.jpg", "Balga Blackboy.jpg", "Black Kangaroo Paw.jpg", "Blue China Orchid.jpg",
+    "Blue Leschenaultia.jpg", "Brachycome.jpg", "Brown Boronia.jpg", "Candle of Life.jpg",
+    "Cape Bluebell.jpg", "Catspaw.jpg", "Christmas Tree.jpg", "Correa.jpg", "Cowkicks.jpg",
+    "Cowslip Orchid.jpg", "Dampiera.jpg", "Donkey Orchid.jpg", "Fringed Lily Twiner.jpg",
+    "Fringed Mantis Orchid.jpg", "Fuchsia Grevillea.jpg", "Fuschia Gum.jpg", "Geraldton Wax.jpg",
+    "Giving Hands.jpg", "Goddess Grasstree.jpg", "Golden Glory.jpg", "Golden Waitsia.jpg",
+    "Green Rose.jpg", "Hairy Yellow Pea.jpg", "Happy Wanderer.jpg", "Hops Bush.jpg",
+    "Hybrid Pink Fairy Cowslip Orchid.jpg", "Illyarrie.jpg", "Leafless Orchid.jpg", "Macrozamia.jpg",
+    "Many Headed Dryandra.jpg", "Mauve Melaleuca.jpg", "Menzies Banksia.jpg", "One Sided Bottlebrush.jpg",
+    "Orange Leschenaultia.jpg", "Orange Spiked Pea.jpg", "Pale Sundew.jpg", "Parakeelya.jpg",
+    "Pincushion Hakea.jpg", "Pink Everlasting.jpg", "Pink Fairy Orchid.jpg", "Pink Fountain Triggerplant.jpg",
+    "Pink Impatiens.jpg", "Pink Trumpet Flower.jpg", "Pixie Mops.jpg", "Purple and Red Kangaroo Paw.jpg",
+    "Purple Enamel Orchid.jpg", "Purple Eremophila.jpg", "Purple Flag Flower.jpg", "Purple Nymph Waterlily.jpg",
+    "Queensland Bottlebrush.jpg", "Rabbit Orchid.jpg", "Red and Green Kangaroo Paw.jpg", "Red Beak Orchid.jpg",
+    "Red Feather Flower.jpg", "Red Leschenaultia.jpg", "Reed Triggerplant.jpg", "Ribbon Pea.jpg",
+    "Rose Cone Flower.jpg", "Shy Blue Orchid.jpg", "Silver Princess.jpg", "Snake Bush.jpg",
+    "Snake Vine.jpg", "Southern Cross.jpg", "Spirit Faces.jpg", "Star of Bethlehem.jpg",
+    "Start´s Spider Orchid.jpg", "Swan River Myrtle.jpg", "Urchin Dryandra.jpg", "Ursinia.jpg",
+    "Veronica.jpg", "Violet Butterfly.jpg", "WA Smokebush.jpg", "Wattle.jpg", "White Eremophila.jpg",
+    "White Nymph Waterlily.jpg", "White Spider Orchid.jpg", "Wild Violet.jpg", "Wooly Banksia.jpg",
+    "Wooly Smokebush.jpg", "Yellow and Green Kangaroo Paw .jpg", "Yellow Boronia.jpg", "Yellow Cone Flower.jpg",
+    "Yellow Flag Flower.jpg", "Yellow Leschenaultia.jpg"
+  ];
+
+  // Carregar fotos automaticamente na inicialização
+  useEffect(() => {
+    const loadSamplePhotos = () => {
+      const mockPhotos = samplePhotoNames.map((fileName, i) => ({
+        id: `sample_${i}`,
+        file: { name: fileName }, // Mock file object
+        url: `/sample-photos/${fileName}`,
+        status: "neutral",
+      }));
+      setPhotos(shuffle(mockPhotos));
+      setStep(1); // Pula direto para a classificação
+    };
+
+    loadSamplePhotos();
+  }, []);
+
   /*************** helpers ***************/
   const shuffle = (arr) => arr.sort(() => Math.random() - 0.5);
   const getPhoto = (id) => photos.find((p) => p.id === id);
@@ -225,27 +267,13 @@ export default function PhotoSelectionApp() {
 function UploadStep({ handleFiles, fileInputRef }) {
   return (
     <div className="text-center space-y-6 max-w-md mx-auto">
-      <h1 className="text-3xl font-bold text-gray-800">Seleção de Fotos</h1>
+      <h1 className="text-3xl font-bold text-gray-800">Carregando Fotos...</h1>
       <p className="text-gray-600">
-        Faça upload de até 88 fotos para classificação e seleção
+        88 fotos de essências florais estão sendo carregadas automaticamente
       </p>
-      <div
-        className="bg-white p-8 rounded-xl shadow-lg border-2 border-dashed border-gray-300 hover:border-blue-400 cursor-pointer transition-colors"
-        onClick={() => fileInputRef.current?.click()}
-      >
-        <Upload className="w-16 h-16 text-blue-500 mx-auto mb-4" />
-        <p className="text-lg font-medium mb-2">Clique para selecionar fotos</p>
-        <p className="text-sm text-gray-500">
-          Ou arraste e solte suas imagens aqui
-        </p>
-        <input
-          type="file"
-          accept="image/*"
-          multiple
-          ref={fileInputRef}
-          onChange={(e) => handleFiles(e.target.files)}
-          className="hidden"
-        />
+      <div className="bg-white p-8 rounded-xl shadow-lg">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto mb-4"></div>
+        <p className="text-lg font-medium mb-2">Preparando classificação...</p>
       </div>
     </div>
   );
