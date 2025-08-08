@@ -98,64 +98,6 @@ export default function PhotoSelectionApp() {
   /*************** relatório ***************/
   const finalList = grid.filter(Boolean).map(getPhoto);
 
-  // Carrega descrições automáticas quando finalList muda
-  useEffect(() => {
-    console.log('🔍 CARREGANDO DESCRIÇÕES...');
-    console.log('Fotos no relatório:', finalList.length);
-    console.log('Descrições disponíveis:', Object.keys(photoDescriptions));
-
-    const autoDescriptions = {};
-    
-    finalList.forEach((photo, index) => {
-      if (!photo || !photo.file) {
-        console.log(`❌ Foto ${index + 1}: sem arquivo`);
-        return;
-      }
-
-      const originalName = photo.file.name;
-      const nameWithoutExt = originalName.replace(/\.[^/.]+$/, "");
-      const normalizedName = nameWithoutExt.toLowerCase().trim();
-      
-      console.log(`📸 Foto ${index + 1}:`);
-      console.log(`   Original: "${originalName}"`);
-      console.log(`   Sem extensão: "${nameWithoutExt}"`);
-      console.log(`   Normalizado: "${normalizedName}"`);
-      
-      // Tenta encontrar a descrição
-      let description = null;
-      
-      // 1. Busca exata (normalizada)
-      if (photoDescriptions[normalizedName]) {
-        description = photoDescriptions[normalizedName];
-        console.log(`   ✅ Encontrou (normalizado): "${description.substring(0, 50)}..."`);
-      }
-      // 2. Busca sem normalização
-      else if (photoDescriptions[nameWithoutExt]) {
-        description = photoDescriptions[nameWithoutExt];
-        console.log(`   ✅ Encontrou (exato): "${description.substring(0, 50)}..."`);
-      }
-      // 3. Busca case-insensitive
-      else {
-        const foundKey = Object.keys(photoDescriptions).find(key => 
-          key.toLowerCase() === normalizedName
-        );
-        if (foundKey) {
-          description = photoDescriptions[foundKey];
-          console.log(`   ✅ Encontrou (case-insensitive): "${description.substring(0, 50)}..."`);
-        } else {
-          console.log(`   ❌ NÃO encontrou descrição`);
-        }
-      }
-      
-      if (description) {
-        autoDescriptions[photo.id] = description;
-      }
-    });
-    
-    console.log('📋 RESULTADO:', Object.keys(autoDescriptions).length, 'descrições carregadas');
-    setDescriptions(prev => ({ ...prev, ...autoDescriptions }));
-  }, [finalList]);
-
   return (
     <div className="min-h-screen bg-gray-50 p-6 flex flex-col items-center">
       {step === 0 && (
@@ -514,17 +456,6 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
                 placeholder="Digite características/descrição..."
                 value={descriptions[p.id] || ""}
                 onChange={(e) => handleChange(p.id, e.target.value)}
-                className="w-full border rounded-lg p-2 text-sm"
-              />
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="text-center mt-6">
-        <button
-          onClick={exportPDF}
-          disabled={exporting}
-          className="px-6 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50"
         >
           {exporting ? "Gerando PDF…" : "Exportar PDF"}
         </button>
