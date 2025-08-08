@@ -329,7 +329,7 @@ function WelcomeStep({ startProcess }) {
           <img 
             src="/Logo 111.png" 
             alt="Logo" 
-            className="h-24 w-auto object-contain"
+            className="h-72 w-auto object-contain"
           />
         </div>
         
