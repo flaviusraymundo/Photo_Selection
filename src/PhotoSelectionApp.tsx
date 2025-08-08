@@ -391,13 +391,29 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
         
         const flowerData = await response.json();
         console.log('✅ JSON carregado com sucesso!');
-        console.log(`📊 Total de essências no JSON: ${Object.keys(flowerData).length}`);
         
-        // Debug: mostrar as chaves do JSON
-        const keys = Object.keys(flowerData);
-        console.log('🔑 Todas as chaves do JSON:');
-        keys.forEach((key, index) => {
-          console.log(`  ${index + 1}. "${key}"`);
+        // Detectar se é array ou objeto
+        const isArray = Array.isArray(flowerData);
+        console.log(`📊 Formato do JSON: ${isArray ? 'Array' : 'Objeto'}`);
+        console.log(`📊 Total de essências: ${isArray ? flowerData.length : Object.keys(flowerData).length}`);
+        
+        // Converter array para objeto se necessário
+        const dataAsObject = isArray 
+          ? flowerData.reduce((acc, item, index) => {
+              // Tentar usar o título como chave, senão usar índice
+              const key = item.title 
+                ? item.title.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_')
+                : index.toString();
+              acc[key] = item;
+              return acc;
+            }, {})
+          : flowerData;
+        
+        // Debug: mostrar algumas chaves
+        const keys = Object.keys(dataAsObject);
+        console.log('🔑 Primeiras 10 chaves:');
+        keys.slice(0, 10).forEach((key, index) => {
+          console.log(`  ${index + 1}. "${key}" → "${dataAsObject[key].title}"`);
         });
         
         setDescriptions(prev => {
@@ -419,34 +435,54 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
               // Normalizar nome do arquivo
               const normalizedFileName = fileNameClean.toLowerCase().trim();
               
-              Object.entries(flowerData).forEach(([key, flower]) => {
+              Object.entries(dataAsObject).forEach(([key, flower]) => {
                 const keyForMatch = key.toLowerCase().trim();
+                const titleForMatch = flower.title?.toLowerCase().trim() || '';
                 
                 let score = 0;
                 
-                // 1. Match exato
+                // 1. Match exato com chave
                 if (normalizedFileName === keyForMatch) {
                   score = 1000;
                 }
-                // 2. Arquivo contém a chave
+                // 2. Match exato com título
+                else if (normalizedFileName === titleForMatch) {
+                  score = 950;
+                }
+                // 3. Arquivo contém a chave
                 else if (normalizedFileName.includes(keyForMatch)) {
                   score = 500;
                 }
-                // 3. Chave contém o arquivo
+                // 4. Arquivo contém o título
+                else if (normalizedFileName.includes(titleForMatch)) {
+                  score = 450;
+                }
+                // 5. Chave contém o arquivo
                 else if (keyForMatch.includes(normalizedFileName)) {
                   score = 300;
                 }
-                // 4. Match com espaços/underscores ignorados
+                // 6. Título contém o arquivo
+                else if (titleForMatch.includes(normalizedFileName)) {
+                  score = 250;
+                }
+                // 7. Match com espaços/underscores ignorados
                 else {
                   const fileNormalized = normalizedFileName.replace(/[-_\s]+/g, '');
                   const keyNormalized = keyForMatch.replace(/[-_\s]+/g, '');
+                  const titleNormalized = titleForMatch.replace(/[-_\s]+/g, '');
                   
                   if (fileNormalized === keyNormalized) {
                     score = 800;
+                  } else if (fileNormalized === titleNormalized) {
+                    score = 750;
                   } else if (fileNormalized.includes(keyNormalized)) {
                     score = 400;
+                  } else if (fileNormalized.includes(titleNormalized)) {
+                    score = 350;
                   } else if (keyNormalized.includes(fileNormalized)) {
                     score = 200;
+                  } else if (titleNormalized.includes(fileNormalized)) {
+                    score = 150;
                   }
                 }
                 
@@ -457,7 +493,7 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
                 }
               });
               
-              // Threshold baixo já que você nomeou os arquivos certinho
+              // Threshold para matching
               if (bestMatch && bestScore >= 200) {
                 next[photo.id] = `${bestMatch.title}\n\n${bestMatch.description}`;
                 console.log(`✅ MATCH ENCONTRADO: "${fileName}" → "${bestKey}" (score: ${bestScore})`);
