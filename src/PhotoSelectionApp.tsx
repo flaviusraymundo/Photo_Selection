@@ -659,7 +659,17 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
     const loadDescriptions = async () => {
       try {
         console.log('🔄 Carregando descrições...');
-        const response = await fetch('/photoDescriptions.json');
+        // Detectar ambiente e ajustar caminho base
+        const getBasePath = () => {
+          const hostname = window.location.hostname;
+          if (hostname.includes('github.io')) {
+            return '/Photo_Selection';
+          }
+          return '';
+        };
+        const basePath = getBasePath();
+        
+        const response = await fetch(`${basePath}/photoDescriptions.json`);
         
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
