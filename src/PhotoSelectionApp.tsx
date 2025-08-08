@@ -378,15 +378,12 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
 
   // --- AUTO-PREENCHIMENTO ----------------------------------------------
   useEffect(() => {
-    if (!finalList.length) return;
+    if (!finalList.length || Object.keys(descriptions).length > 0) return;
 
     const newDescriptions = {};
 
     finalList.forEach(photo => {
       // Pula se já tem descrição (edição manual)
-      if (descriptions[photo.id]) return;
-      
-      const fileName = (photo.file?.name || "").toLowerCase().replace(/\.[^/.]+$/, "");
       console.log('🔍 Checking file:', fileName);
       
       Object.entries(photoDescriptions).forEach(([key, description]) => {
@@ -405,11 +402,11 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
 
     console.log('🎯 Auto descriptions found:', newDescriptions);
     
-    // Só atualiza se encontrou algo
+    // Só atualiza se encontrou algo e não tem descrições ainda
     if (Object.keys(newDescriptions).length > 0) {
-      setDescriptions(prev => ({ ...prev, ...newDescriptions }));
+      setDescriptions(newDescriptions);
     }
-  }, [finalList]);
+  }, [finalList, setDescriptions]);
   // ----------------------------------------------------------------------
 
 
