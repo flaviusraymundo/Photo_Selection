@@ -369,6 +369,30 @@ function ArrangeStep({ grid, getPhoto, onDragStart, onDrop, finish }) {
 }
 
 function ReportStep({ finalList, descriptions, setDescriptions, exporting, setExporting }) {
+  // Auto-preencher descrições baseado no nome do arquivo
+  useEffect(() => {
+    const autoFillDescriptions = {};
+    
+    finalList.forEach(photo => {
+      if (photo.file?.name && !descriptions[photo.id]) {
+        const fileName = photo.file.name.toLowerCase().replace(/\.[^/.]+$/, "");
+        
+        // Procurar correspondência no JSON
+        const matchedKey = Object.keys(photoDescriptions).find(key => 
+          fileName.includes(key.toLowerCase()) || key.toLowerCase().includes(fileName)
+        );
+        
+        if (matchedKey) {
+          autoFillDescriptions[photo.id] = photoDescriptions[matchedKey];
+        }
+      }
+    });
+    
+    if (Object.keys(autoFillDescriptions).length > 0) {
+      setDescriptions(prev => ({ ...prev, ...autoFillDescriptions }));
+    }
+  }, [finalList, descriptions, setDescriptions]);
+
   const handleChange = (id, val) => {
     setDescriptions((prev) => ({ ...prev, [id]: val }));
   };
