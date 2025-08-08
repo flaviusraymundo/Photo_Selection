@@ -924,13 +924,19 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
       
       // Processar o texto para adicionar espaçamento entre seções
       const formattedDesc = desc
+        // Remover texto padrão de dosagem que aparece em todas as descrições
+        .replace(/Dosagem Oral de Essências Florais \(para bem-estar mental\/emocional\)\s*/g, '')
+        .replace(/Informações sobre como prescrever e preparar doses orais\.\s*/g, '')
         .replace(/\n\n/g, '\n \n') // Adiciona linha em branco entre parágrafos
         .replace(/Qualidades Positivas - Palavras-Chave:/g, '\nQualidades Positivas - Palavras-Chave:')
         .replace(/Problema Alvo - Palavras-Chave:/g, '\nProblema Alvo - Palavras-Chave:')
         .replace(/Natureza Curativa/g, '\nNatureza Curativa')
         .replace(/Qualidades Espirituais/g, '\nQualidades Espirituais')
         .replace(/Saúde Mental\/Emocional/g, '\nSaúde Mental/Emocional')
-        .replace(/Dosagem Oral/g, '\nDosagem Oral');
+        .replace(/Dosagem Oral/g, '\nDosagem Oral')
+        // Limpar espaços extras que podem ter sobrado
+        .replace(/\n\s*\n\s*\n/g, '\n\n') // Remove linhas em branco excessivas
+        .trim(); // Remove espaços no início e fim
       
       const wrapped = pdf.splitTextToSize(formattedDesc, maxW);
       const blockH = Math.max(thumb, (2 + wrapped.length) * lineH);
