@@ -397,48 +397,58 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
               const fileNameClean = fileName.replace(/\.[^/.]+$/, ''); // remove extensão
               console.log('Processing file:', fileName, '-> clean:', fileNameClean);
               
-              // Procurar match no JSON - primeiro por chave exata, depois por palavras
+              // Procurar match no JSON com prioridade para matches mais específicos
               let matchedFlower = null;
               let matchedKey = null;
+               let matchScore = 0;
              
-              // 1. Busca por chave exata (ex: "macrozamia.jpg" -> "macrozamia")
-              if (flowerData[fileNameClean]) {
-                matchedFlower = flowerData[fileNameClean];
-                matchedKey = fileNameClean;
-                console.log('Exact match found:', matchedKey);
-              } else {
-                // 2. Busca por chave que contenha parte do nome do arquivo
-                Object.keys(flowerData).forEach(key => {
-                  if (fileNameClean.includes(key) || key.includes(fileNameClean)) {
-                    matchedFlower = flowerData[key];
-                    matchedKey = key;
-                    console.log('Key match found:', key, 'for file:', fileNameClean);
-                  }
-                });
+              // Buscar o melhor match possível
+              Object.entries(flowerData).forEach(([key, flower]) => {
+                let currentScore = 0;
                 
-                // 3. Busca por palavras do título no nome do arquivo
-                if (!matchedFlower) {
-                  Object.entries(flowerData).forEach(([key, flower]) => {
-                    const flowerTitle = flower.title?.toLowerCase() || '';
-                    const flowerWords = flowerTitle.split(' ');
-                    
-                    // Verifica se alguma palavra do título está no nome do arquivo
-                    const hasMatch = flowerWords.some(word => 
-                      word.length > 2 && (fileNameClean.includes(word) || word.includes(fileNameClean))
-                    );
-                    
-                    if (hasMatch && !matchedFlower) {
-                      matchedFlower = flower;
-                      matchedKey = key;
-                      console.log('Title match found:', key, 'for file:', fileNameClean);
-                    }
-                  });
+                // 1. Match exato da chave (pontuação máxima)
+                if (fileNameClean === key) {
+                  currentScore = 1000;
                 }
-              }
+                // 2. Nome do arquivo contém a chave completa
+                else if (fileNameClean.includes(key)) {
+                  currentScore = 500 + key.length; // Prefere chaves mais longas
+                }
+                // 3. Chave contém o nome do arquivo
+                else if (key.includes(fileNameClean) && fileNameClean.length > 3) {
+                  currentScore = 300 + fileNameClean.length;
+                }
+                // 4. Match por palavras do título
+                else {
+                  const flowerTitle = flower.title?.toLowerCase() || '';
+                  const titleWords = flowerTitle.split(' ').filter(word => word.length > 2);
+                  const fileWords = fileNameClean.split(/[_\s-]+/).filter(word => word.length > 2);
+                  
+                  let wordMatches = 0;
+                  titleWords.forEach(titleWord => {
+                    fileWords.forEach(fileWord => {
+                      if (titleWord.includes(fileWord) || fileWord.includes(titleWord)) {
+                        wordMatches++;
+                      }
+                    });
+                  });
+                  
+                  if (wordMatches > 0) {
+                    currentScore = wordMatches * 50;
+                  }
+                }
+                
+                // Atualiza se encontrou um match melhor
+                if (currentScore > matchScore) {
+                  matchScore = currentScore;
+                  matchedFlower = flower;
+                  matchedKey = key;
+                }
+              });
               
               if (matchedFlower) {
                 next[photo.id] = `${matchedFlower.title}\n\n${matchedFlower.description}`;
-                console.log('Description set for:', fileName, 'using:', matchedKey);
+                console.log('Description set for:', fileName, 'using:', matchedKey, 'score:', matchScore);
               } else {
                 console.log('No match found for:', fileName);
               }
