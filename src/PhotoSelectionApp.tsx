@@ -358,7 +358,7 @@ function WelcomeStep({ startProcess }) {
         <div className="text-left bg-white p-6 rounded-lg shadow-sm border text-sm text-gray-600 space-y-2">
           <h3 className="font-semibold text-gray-800 mb-3">Como funciona:</h3>
           <div className="space-y-1">
-            <p>• <strong>Etapa 1:</strong> Relembrando a situação/problema: classificar as 88 fotos em: (Positivas, Negativas ou Neutras)</p>
+            <p>• <strong>Etapa 1:</strong> Relembrando a situação/problema: classificar as 88 fotos em (Positivas, Negativas ou Neutras)</p>
             <p>• <strong>Etapa 2:</strong> Selecionar as fotos mais impactantes</p>
             <p>• <strong>Etapa 3:</strong> Diagnóstico</p>
             <p>• <strong>Etapa 4:</strong> Gerar relatório em PDF</p>
