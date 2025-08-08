@@ -108,12 +108,20 @@ export default function PhotoSelectionApp() {
           .replace(/\.[^/.]+$/, "") // remove extensão
           .toLowerCase()
           .trim();
+        
+        console.log('Procurando descrição para:', fileName); // Debug
+        console.log('Descrições disponíveis:', Object.keys(photoDescriptions)); // Debug
+        
         const description = photoDescriptions[fileName];
         if (description) {
+          console.log('Descrição encontrada:', description); // Debug
           autoDescriptions[photo.id] = description;
+        } else {
+          console.log('Descrição não encontrada para:', fileName); // Debug
         }
       }
     });
+    console.log('Descrições automáticas carregadas:', autoDescriptions); // Debug
     setDescriptions(prev => ({ ...prev, ...autoDescriptions }));
   }, [finalList]);
 
