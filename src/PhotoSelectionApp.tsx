@@ -455,7 +455,6 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
                 onChange={(e) => handleChange(p.id, e.target.value)}
                className="w-full p-2 border rounded-md resize-none"
              />
-              />
             </div>
           </div>
         ))}
