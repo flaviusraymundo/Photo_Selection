@@ -56,8 +56,16 @@ export default function PhotoSelectionApp() {
   // Carregar fotos automaticamente na inicialização
   useEffect(() => {
     const loadSamplePhotos = () => {
-      // Detectar se está no GitHub Pages ou Netlify
-      const basePath = window.location.hostname.includes('github.io') ? '/Photo_Selection' : '';
+      // Detectar ambiente e ajustar caminho base
+      const getBasePath = () => {
+        const hostname = window.location.hostname;
+        if (hostname.includes('github.io')) {
+          return '/Photo_Selection';
+        }
+        // Para desenvolvimento local e Netlify
+        return '';
+      };
+      const basePath = getBasePath();
       
       const mockPhotos = samplePhotoNames.map((fileName, i) => ({
         id: `sample_${i}`,
@@ -93,10 +101,21 @@ export default function PhotoSelectionApp() {
   useEffect(() => {
     if (step === 0) {
       const loadSamplePhotos = () => {
+        // Detectar ambiente e ajustar caminho base
+        const getBasePath = () => {
+          const hostname = window.location.hostname;
+          if (hostname.includes('github.io')) {
+            return '/Photo_Selection';
+          }
+          // Para desenvolvimento local e Netlify
+          return '';
+        };
+        const basePath = getBasePath();
+        
         const mockPhotos = samplePhotoNames.map((fileName, i) => ({
           id: `sample_${i}`,
           file: { name: fileName }, // Mock file object
-          url: `/Photo_Selection/sample-photos/${fileName}`,
+          url: `${basePath}/sample-photos/${fileName}`,
           status: "neutral",
         }));
         setPhotos(shuffle(mockPhotos));
@@ -325,8 +344,16 @@ export default function PhotoSelectionApp() {
 /* ---------- componentes ---------- */
 
 function WelcomeStep({ startProcess }) {
-  // Detectar se está no GitHub Pages ou Netlify
-  const basePath = window.location.hostname.includes('github.io') ? '/Photo_Selection' : '';
+  // Detectar ambiente e ajustar caminho base
+  const getBasePath = () => {
+    const hostname = window.location.hostname;
+    if (hostname.includes('github.io')) {
+      return '/Photo_Selection';
+    }
+    // Para desenvolvimento local e Netlify
+    return '';
+  };
+  const basePath = getBasePath();
   
   return (
     <div className="min-h-screen flex items-center justify-center">
