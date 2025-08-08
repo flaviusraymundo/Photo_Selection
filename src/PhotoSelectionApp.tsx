@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { Upload } from "lucide-react";
 import photoDescriptions from "./data/photoDescriptions.json";
 
@@ -96,7 +96,10 @@ export default function PhotoSelectionApp() {
   };
 
   /*************** relatório ***************/
-  const finalList = grid.filter(Boolean).map(getPhoto);
+  const finalList = useMemo(() => 
+    grid.filter(Boolean).map(getPhoto), 
+    [grid, photos]
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 flex flex-col items-center">
