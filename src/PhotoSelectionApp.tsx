@@ -380,51 +380,35 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
   useEffect(() => {
     if (!finalList.length) return;
 
-    console.log('PhotoDescriptions:', photoDescriptions); // DEBUG
-    console.log('FinalList files:', finalList.map(p => p.file?.name)); // DEBUG
+    const newDescriptions = {};
 
-    const autoDescriptions = {};
-
-    finalList.forEach(p => {
-      const fileName = (p.file?.name ?? "").toLowerCase().replace(/\.[^/.]+$/, "");
-      console.log('Checking file:', fileName); // DEBUG
+    finalList.forEach(photo => {
+      // Pula se já tem descrição (edição manual)
+      if (descriptions[photo.id]) return;
       
-      // Matching direto e simples
+      const fileName = (photo.file?.name || "").toLowerCase().replace(/\.[^/.]+$/, "");
+      console.log('🔍 Checking file:', fileName);
+      
       Object.entries(photoDescriptions).forEach(([key, description]) => {
-        const keyLower = key.toLowerCase();
-        console.log('Comparing with key:', keyLower); // DEBUG
+        const keyWords = key.toLowerCase().split(' ');
+        console.log('  📝 Comparing with:', key, '→', keyWords);
         
-        // Tenta match direto primeiro
-        if (fileName.includes(keyLower) || keyLower.includes(fileName)) {
-          console.log('MATCH FOUND:', key, '→', fileName); // DEBUG
-          autoDescriptions[p.id] = description;
-          return;
-        }
+        // Verifica se todas as palavras da chave estão no nome do arquivo
+        const allWordsMatch = keyWords.every(word => fileName.includes(word));
         
-        // Tenta match por palavras individuais
-        const fileWords = fileName.split(/[\s-_]+/).filter(w => w.length > 2);
-        const keyWords = keyLower.split(/[\s-_]+/).filter(w => w.length > 2);
-        
-        const matches = fileWords.filter(fw => 
-          keyWords.some(kw => fw.includes(kw) || kw.includes(fw))
-        );
-        
-        if (matches.length >= Math.min(2, keyWords.length)) {
-          console.log('WORD MATCH FOUND:', key, '→', fileName, 'matches:', matches); // DEBUG
-          autoDescriptions[p.id] = description;
+        if (allWordsMatch) {
+          console.log('✅ MATCH FOUND:', key, '→', fileName);
+          newDescriptions[photo.id] = description;
         }
       });
     });
 
-    console.log('Auto descriptions found:', autoDescriptions); // DEBUG
+    console.log('🎯 Auto descriptions found:', newDescriptions);
     
-    // Só atualiza se encontrou algo E não sobrescreve edições manuais
-    if (Object.keys(autoDescriptions).length > 0) {
-      setDescriptions(prev => ({ ...autoDescriptions, ...prev }));
+    // Só atualiza se encontrou algo
+    if (Object.keys(newDescriptions).length > 0) {
+      setDescriptions(prev => ({ ...prev, ...newDescriptions }));
     }
-  }, [finalList]);
-  // ----------------------------------------------------------------------
-    });
   }, [finalList]);
   // ----------------------------------------------------------------------
 
