@@ -647,6 +647,8 @@ function ArrangeStep({ chosen, photoPositions, getPhoto, handleMouseDown, dragge
 }
 
 function ReportStep({ finalList, descriptions, setDescriptions, exporting, setExporting }) {
+  const [additionalInfo, setAdditionalInfo] = useState('');
+  
   const handleChange = (id, val) => {
     setDescriptions((prev) => ({ ...prev, [id]: val }));
   };
@@ -806,9 +808,61 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
     const pageW = pdf.internal.pageSize.getWidth();
     const pageH = pdf.internal.pageSize.getHeight();
 
+    // Adicionar cabeçalho profissional na primeira página
+    const centerX = pageW / 2;
+    let y = margin + 20;
+    
+    // Título principal
+    pdf.setFontSize(24);
+    pdf.setTextColor("#1f2937");
+    pdf.text("Diagnóstico Avançado", centerX, y, { align: "center" });
+    y += 30;
+    
+    pdf.text("em Terapia Vibracional", centerX, y, { align: "center" });
+    y += 50;
+    
+    // Autor
+    pdf.setFontSize(16);
+    pdf.setTextColor("#6b7280");
+    pdf.text("Por Flavius Raymundo", centerX, y, { align: "center" });
+    y += 60;
+    
+    // Data do relatório
+    const currentDate = new Date().toLocaleDateString('pt-BR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+    pdf.setFontSize(12);
+    pdf.text(`Relatório gerado em: ${currentDate}`, centerX, y, { align: "center" });
+    y += 40;
+    
+    // Informações adicionais (se preenchidas)
+    if (additionalInfo.trim()) {
+      pdf.setFontSize(14);
+      pdf.setTextColor("#1f2937");
+      pdf.text("Informações Adicionais:", margin, y);
+      y += 25;
+      
+      pdf.setFontSize(11);
+      pdf.setTextColor("#374151");
+      const additionalWrapped = pdf.splitTextToSize(additionalInfo, pageW - margin * 2);
+      pdf.text(additionalWrapped, margin, y);
+      y += additionalWrapped.length * 14 + 30;
+    }
+    
+    // Linha separadora
+    pdf.setDrawColor("#e5e7eb");
+    pdf.line(margin, y, pageW - margin, y);
+    y += 40;
+    
+    // Título da seção de fotos
+    pdf.setFontSize(16);
+    pdf.setTextColor("#1f2937");
+    pdf.text("Essências Selecionadas", centerX, y, { align: "center" });
+    y += 40;
     const thumb = 72;         // 1 polegada
     const lineH = 14;
-    let y = margin;
 
     // converter URL para canvas e depois dataURL
     const urlToDataURL = (url) =>
@@ -898,6 +952,24 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
           </div>
         ))}
       </div>
+      
+      {/* Campo para informações adicionais */}
+      <div className="mt-8 bg-blue-50 p-6 rounded-lg border border-blue-200">
+        <h3 className="text-lg font-semibold text-blue-900 mb-3">
+          Informações Adicionais
+        </h3>
+        <p className="text-sm text-blue-700 mb-3">
+          Este campo será incluído no cabeçalho do PDF. Use para adicionar informações sobre o paciente, contexto da consulta, observações gerais, etc.
+        </p>
+        <textarea
+          rows={4}
+          placeholder="Ex: Paciente: João Silva, Idade: 35 anos, Consulta inicial sobre ansiedade e insônia..."
+          value={additionalInfo}
+          onChange={(e) => setAdditionalInfo(e.target.value)}
+          className="w-full p-3 border border-blue-300 rounded-md resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        />
+      </div>
+      
       <div className="text-center mt-6">
         <button
           onClick={exportPDF}
