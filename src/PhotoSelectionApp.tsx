@@ -375,36 +375,48 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
 
   // --- AUTO-PREENCHIMENTO ----------------------------------------------
   useEffect(() => {
-    if (!finalList.length) return;       // nada a fazer
+    if (!finalList.length) return;
 
-    // Construímos um mapa com palavras-chave para matching mais flexível
-    const keywordMap = {};
-    Object.entries(photoDescriptions).forEach(([key, description]) => {
-      // Extrair palavras-chave principais de cada entrada do JSON
-      const keywords = key.toLowerCase().split(/[\s-_]+/);
-      keywordMap[key] = { keywords, description };
-    });
+    console.log('PhotoDescriptions:', photoDescriptions); // DEBUG
+    console.log('FinalList files:', finalList.map(p => p.file?.name)); // DEBUG
 
     setDescriptions(prev => {
       const next = { ...prev };
 
       finalList.forEach(p => {
+        if (next[p.id]) return; // já preenchido manualmente
+        
         const fileName = (p.file?.name ?? "").toLowerCase().replace(/\.[^/.]+$/, "");
-        if (next[p.id]) return;                 // já preenchido manualmente
-
-        // Procura por correspondência de palavras-chave
-        Object.entries(keywordMap).forEach(([key, { keywords, description }]) => {
-          // Verifica se pelo menos 2 palavras-chave batem (ou 1 se for palavra única)
-          const matches = keywords.filter(keyword => 
-            fileName.includes(keyword) && keyword.length > 2 // ignora palavras muito pequenas
+        console.log('Checking file:', fileName); // DEBUG
+        
+        // Matching direto e simples
+        Object.entries(photoDescriptions).forEach(([key, description]) => {
+          const keyLower = key.toLowerCase();
+          console.log('Comparing with key:', keyLower); // DEBUG
+          
+          // Tenta match direto primeiro
+          if (fileName.includes(keyLower) || keyLower.includes(fileName)) {
+            console.log('MATCH FOUND:', key, '→', fileName); // DEBUG
+            next[p.id] = description;
+            return;
+          }
+          
+          // Tenta match por palavras individuais
+          const fileWords = fileName.split(/[\s-_]+/).filter(w => w.length > 2);
+          const keyWords = keyLower.split(/[\s-_]+/).filter(w => w.length > 2);
+          
+          const matches = fileWords.filter(fw => 
+            keyWords.some(kw => fw.includes(kw) || kw.includes(fw))
           );
           
-          if (matches.length >= Math.min(2, keywords.length)) {
+          if (matches.length >= Math.min(2, keyWords.length)) {
+            console.log('WORD MATCH FOUND:', key, '→', fileName, 'matches:', matches); // DEBUG
             next[p.id] = description;
           }
         });
       });
 
+      console.log('Final descriptions:', next); // DEBUG
       return next;
     });
   }, [finalList]);
