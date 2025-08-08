@@ -100,28 +100,43 @@ export default function PhotoSelectionApp() {
 
   // Carrega descrições automáticas quando finalList muda
   useEffect(() => {
+    console.log('=== INICIANDO CARREGAMENTO DE DESCRIÇÕES ===');
+    console.log('finalList:', finalList);
+    console.log('photoDescriptions disponíveis:', photoDescriptions);
+    
     const autoDescriptions = {};
     finalList.forEach(photo => {
       if (photo && photo.file) {
+        console.log('Processando foto:', photo);
+        console.log('Nome original do arquivo:', photo.file.name);
+        
         // Remove extensão e normaliza o nome do arquivo para buscar no JSON
         const fileName = photo.file.name
           .replace(/\.[^/.]+$/, "") // remove extensão
           .toLowerCase()
           .trim();
         
-        console.log('Procurando descrição para:', fileName); // Debug
-        console.log('Descrições disponíveis:', Object.keys(photoDescriptions)); // Debug
+        console.log('Nome normalizado para busca:', fileName);
+        console.log('Chaves disponíveis no JSON:', Object.keys(photoDescriptions));
         
         const description = photoDescriptions[fileName];
         if (description) {
-          console.log('Descrição encontrada:', description); // Debug
+          console.log('✅ Descrição encontrada:', description);
           autoDescriptions[photo.id] = description;
         } else {
-          console.log('Descrição não encontrada para:', fileName); // Debug
+          console.log('❌ Descrição NÃO encontrada para:', fileName);
+          console.log('Tentando busca exata...');
+          // Tenta busca exata sem normalização
+          const exactMatch = photoDescriptions[photo.file.name.replace(/\.[^/.]+$/, "")];
+          if (exactMatch) {
+            console.log('✅ Encontrou com busca exata:', exactMatch);
+            autoDescriptions[photo.id] = exactMatch;
+          }
         }
       }
     });
-    console.log('Descrições automáticas carregadas:', autoDescriptions); // Debug
+    console.log('=== RESULTADO FINAL ===');
+    console.log('Descrições automáticas carregadas:', autoDescriptions);
     setDescriptions(prev => ({ ...prev, ...autoDescriptions }));
   }, [finalList]);
 
