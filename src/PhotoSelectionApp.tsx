@@ -392,23 +392,29 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
             // Só preenche se não tem descrição ainda
             if (!next[photo.id]) {
               const fileName = photo.file?.name?.toLowerCase() || '';
+             const fileNameClean = fileName.replace(/\.[^/.]+$/, ''); // remove extensão
               
-              // Procurar match no JSON baseado no nome do arquivo
-              const matchedFlower = Object.values(flowerData).find(flower => {
-                const flowerTitle = flower.title?.toLowerCase() || '';
-                const flowerWords = flowerTitle.split(' ');
-                
-                // Verifica se alguma palavra do título da flor está no nome do arquivo
-                return flowerWords.some(word => 
-                  word.length > 2 && fileName.includes(word)
-                ) || fileName.includes(flowerTitle);
-              });
+             // Procurar match no JSON - primeiro por chave exata, depois por palavras
+             let matchedFlower = null;
+             
+             // 1. Busca por chave exata (ex: "macrozamia.jpg" -> "macrozamia")
+             if (flowerData[fileNameClean]) {
+               matchedFlower = flowerData[fileNameClean];
+             } else {
+               // 2. Busca por palavras do título no nome do arquivo
+               matchedFlower = Object.values(flowerData).find(flower => {
+                 const flowerTitle = flower.title?.toLowerCase() || '';
+                 const flowerWords = flowerTitle.split(' ');
+                 
+                 // Verifica se alguma palavra do título está no nome do arquivo
+                 return flowerWords.some(word => 
+                   word.length > 2 && fileNameClean.includes(word)
+                 );
+               });
+             }
               
               if (matchedFlower) {
                 next[photo.id] = `${matchedFlower.title}\n\n${matchedFlower.description}`;
-              } else {
-                // Fallback: usar uma descrição genérica
-                next[photo.id] = `Essência Floral\n\nDescrição personalizada para ${photo.file?.name || 'esta foto'}.`;
               }
             }
           });
