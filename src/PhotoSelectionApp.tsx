@@ -238,7 +238,7 @@ function SelectionStep({ photos, chosen, toggleChosen, proceed, previewPhoto, se
     <>
       <div className="w-full max-w-5xl">
         <h2 className="text-xl font-semibold mb-4 text-center">
-          2. Selecione as 7 fotos mais impactantes ({chosen.length}/7 selecionadas)
+          2. Selecione até 7 fotos mais impactantes ({chosen.length}/7 selecionadas)
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
           {photos.map((p) => (
@@ -284,17 +284,17 @@ function SelectionStep({ photos, chosen, toggleChosen, proceed, previewPhoto, se
         </div>
         <div className="text-center mt-6">
           <button
-            disabled={chosen.length !== 7}
+            disabled={chosen.length === 0}
             onClick={proceed}
             className={`px-8 py-3 rounded-xl text-white font-medium transition-colors ${
-              chosen.length === 7
+              chosen.length > 0
                 ? "bg-blue-600 hover:bg-blue-700 cursor-pointer" 
                 : "bg-gray-400 cursor-not-allowed"
             }`}
           >
-            {chosen.length === 7 
+            {chosen.length > 0 
               ? "Continuar para Organização" 
-              : `Selecione ${7 - chosen.length} foto(s)`
+              : "Selecione pelo menos 1 foto"
             }
           </button>
         </div>
@@ -317,7 +317,7 @@ function SelectionStep({ photos, chosen, toggleChosen, proceed, previewPhoto, se
               <div className="font-medium">{previewPhoto.file?.name || 'Foto'}</div>
               <div className="text-sm opacity-80">
                 {previewPhoto.status === 'positive' ? 'Positiva' : 'Negativa'}
-                {chosen.includes(previewPhoto.id) && ` • Selecionada (${chosen.indexOf(previewPhoto.id) + 1}/7)`}
+                {chosen.includes(previewPhoto.id) && ` • Selecionada (${chosen.indexOf(previewPhoto.id) + 1}/${chosen.length})`}
               </div>
             </div>
             <button
