@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { Upload } from "lucide-react";
+import photoDescriptions from "./data/photoDescriptions.json";
 
 /**
  * PhotoSelectionApp – versão estável 🟢
@@ -379,19 +380,8 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
   useEffect(() => {
     if (!finalList.length) return;
     
-    // Descrições das plantas australianas
-    const descriptions = [
-      "Flor nativa australiana com formato esférico e espinhos radiantes em tons de vermelho e amarelo, lembrando um alfineteiro tradicional.",
-      "Flor delicada com pétalas vermelhas em formato de fita, característica da flora australiana com folhagem verde-acinzentada.",
-      "Flor branca com múltiplas pétalas finas e delicadas, criando um efeito visual que lembra pequenos pompons ou esfregões.",
-      "Banksia com inflorescência cilíndrica característica em tons de laranja e vermelho, típica da vegetação australiana.",
-      "Orquídea nativa com formato distintivo que lembra a silhueta de um coelho, com pétalas brancas e detalhes em tons rosados.",
-      "Flor tubular em tons vibrantes de vermelho e laranja, característica da flora do oeste australiano com pétalas delicadas.",
-      "Lírio trepadeira com pétalas franjadas em tons de lilás e branco, conhecido por suas bordas delicadamente recortadas.",
-      "Flor nativa australiana com pétalas douradas delicadas e centro amarelo brilhante, característica da flora do oeste da Austrália.",
-      "Planta cíclica primitiva com folhas longas e arqueadas, característica da flora australiana, conhecida por suas sementes grandes e coloridas.",
-      "Orquídea única que floresce sem folhas visíveis, com flores delicadas em tons suaves, adaptada a ambientes específicos da Austrália."
-    ];
+    // Usa as descrições do JSON importado
+    const descriptions = Object.values(photoDescriptions);
 
     setDescriptions(prev => {
       const next = { ...prev };
