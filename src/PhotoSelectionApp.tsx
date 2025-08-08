@@ -413,13 +413,20 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
                 if (normalizedFileName === normalizedKey) {
                   score = 1000;
                 }
-                // 2. Nome do arquivo contém a chave completa
-                else if (normalizedFileName.includes(normalizedKey)) {
-                  score = 500 + normalizedKey.length;
+                // 2. Nome do arquivo contém a chave completa (mais restritivo)
+                else if (normalizedFileName.includes(normalizedKey) && normalizedKey.length >= 4) {
+                  // Verificar se é uma palavra completa, não apenas substring
+                  const regex = new RegExp(`\\b${normalizedKey.replace(/\s+/g, '\\s+')}\\b`);
+                  if (regex.test(normalizedFileName)) {
+                    score = 500 + normalizedKey.length;
+                  }
                 }
-                // 3. Chave contém o nome do arquivo
-                else if (normalizedKey.includes(normalizedFileName)) {
-                  score = 300 + normalizedFileName.length;
+                // 3. Chave contém o nome do arquivo (mais restritivo)
+                else if (normalizedKey.includes(normalizedFileName) && normalizedFileName.length >= 4) {
+                  const regex = new RegExp(`\\b${normalizedFileName.replace(/\s+/g, '\\s+')}\\b`);
+                  if (regex.test(normalizedKey)) {
+                    score = 300 + normalizedFileName.length;
+                  }
                 }
                 // 4. Match por palavras individuais (melhorado)
                 else {
@@ -427,30 +434,41 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
                   const keyWords = normalizedKey.split(' ');
                   
                   let wordMatches = 0;
+                  let exactWordMatches = 0;
                   fileWords.forEach(fileWord => {
+                    if (fileWord.length < 3) return; // Ignorar palavras muito pequenas
                     keyWords.forEach(keyWord => {
+                      if (keyWord.length < 3) return; // Ignorar palavras muito pequenas
                       // Match exato de palavra
                       if (fileWord === keyWord) {
                         score += 100;
                         wordMatches++;
+                        exactWordMatches++;
                       }
-                      // Uma palavra contém a outra
-                      else if (keyWord.includes(fileWord) || fileWord.includes(keyWord)) {
+                      // Uma palavra contém a outra (mais restritivo)
+                      else if (fileWord.length >= 4 && keyWord.length >= 4 && 
+                               (keyWord.includes(fileWord) || fileWord.includes(keyWord))) {
                         score += 50;
                         wordMatches++;
                       }
-                      // Match parcial (pelo menos 3 caracteres)
-                      else if (fileWord.length >= 3 && keyWord.length >= 3) {
-                        if (fileWord.substring(0, 3) === keyWord.substring(0, 3)) {
+                      // Match parcial (pelo menos 4 caracteres)
+                      else if (fileWord.length >= 5 && keyWord.length >= 5) {
+                        if (fileWord.substring(0, 4) === keyWord.substring(0, 4)) {
                           score += 25;
                         }
                       }
                     });
                   });
                   
-                  // Bonus se múltiplas palavras fazem match
-                  if (wordMatches > 1) {
+                  // Bonus apenas para matches exatos de múltiplas palavras
+                  if (exactWordMatches > 1) {
                     score += wordMatches * 25;
+                  }
+                  
+                  // Penalizar se há muita diferença no número de palavras
+                  const wordDiff = Math.abs(fileWords.length - keyWords.length);
+                  if (wordDiff > 2) {
+                    score -= wordDiff * 10;
                   }
                 }
                 
@@ -461,8 +479,8 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
                 }
               });
               
-              // Reduzir threshold para pegar mais matches
-              if (bestMatch && bestScore > 25) {
+              // Threshold mais alto para evitar matches ruins
+              if (bestMatch && bestScore > 75) {
                 next[photo.id] = `${bestMatch.title}\n\n${bestMatch.description}`;
                 console.log(`Match found: "${fileName}" → "${bestKey}" (score: ${bestScore})`);
               } else {
