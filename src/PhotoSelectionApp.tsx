@@ -647,7 +647,7 @@ function ArrangeStep({ chosen, photoPositions, getPhoto, handleMouseDown, dragge
 }
 
 function ReportStep({ finalList, descriptions, setDescriptions, exporting, setExporting }) {
-  const [additionalInfo, setAdditionalInfo] = useState('');
+  const [additionalInfo, setAdditionalInfo] = useState('Paciente:\n\nDosagem:\n\nNotas:\n');
   
   const handleChange = (id, val) => {
     setDescriptions((prev) => ({ ...prev, [id]: val }));
@@ -808,9 +808,41 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
     const pageW = pdf.internal.pageSize.getWidth();
     const pageH = pdf.internal.pageSize.getHeight();
 
+    // Detectar ambiente e ajustar caminho base para o logo
+    const getBasePath = () => {
+      const hostname = window.location.hostname;
+      if (hostname.includes('github.io')) {
+        return '/Photo_Selection';
+      }
+      return '';
+    };
+    const basePath = getBasePath();
+
     // Adicionar cabeçalho profissional na primeira página
     const centerX = pageW / 2;
     let y = margin + 20;
+    
+    // Adicionar logo
+    try {
+      const logoResponse = await fetch(`${basePath}/Logo 111.png`);
+      if (logoResponse.ok) {
+        const logoBlob = await logoResponse.blob();
+        const logoDataURL = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.readAsDataURL(logoBlob);
+        });
+        
+        // Adicionar logo centralizado (ajustar tamanho conforme necessário)
+        const logoWidth = 120;
+        const logoHeight = 120;
+        pdf.addImage(logoDataURL, "PNG", centerX - logoWidth/2, y, logoWidth, logoHeight);
+        y += logoHeight + 30;
+      }
+    } catch (error) {
+      console.log('Logo não pôde ser carregado no PDF:', error);
+      // Continua sem o logo se houver erro
+    }
     
     // Título principal
     pdf.setFontSize(24);
@@ -963,7 +995,7 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
         </p>
         <textarea
           rows={4}
-          placeholder="Ex: Paciente: João Silva, Idade: 35 anos, Consulta inicial sobre ansiedade e insônia..."
+          placeholder="Preencha as informações do paciente, dosagem recomendada e observações..."
           value={additionalInfo}
           onChange={(e) => setAdditionalInfo(e.target.value)}
           className="w-full p-3 border border-blue-300 rounded-md resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
