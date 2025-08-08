@@ -886,13 +886,17 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
     // Linha separadora
     pdf.setDrawColor("#e5e7eb");
     pdf.line(margin, y, pageW - margin, y);
-    y += 40;
     
-    // Título da seção de fotos
+    // Adicionar nova página para as essências
+    pdf.addPage();
+    y = margin + 20;
+    
+    // Título da seção de fotos na nova página
     pdf.setFontSize(16);
     pdf.setTextColor("#1f2937");
     pdf.text("Essências Selecionadas", centerX, y, { align: "center" });
     y += 40;
+    
     const thumb = 72;         // 1 polegada
     const lineH = 14;
 
