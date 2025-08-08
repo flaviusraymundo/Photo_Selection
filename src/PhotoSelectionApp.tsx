@@ -1,6 +1,20 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { Upload } from "lucide-react";
-import photoDescriptions from "./data/photoDescriptions.json";
+// import photoDescriptions from "./data/photoDescriptions.json";
+
+// Descrições hardcoded para garantir que funcione
+const photoDescriptions = {
+  "pincushion hakea": "Flor nativa australiana com formato esférico e espinhos radiantes em tons de vermelho e amarelo, lembrando um alfineteiro tradicional.",
+  "ribbon pea": "Flor delicada com pétalas vermelhas em formato de fita, característica da flora australiana com folhagem verde-acinzentada.",
+  "pixie mops": "Flor branca com múltiplas pétalas finas e delicadas, criando um efeito visual que lembra pequenos pompons ou esfregões.",
+  "menzies banksia": "Banksia com inflorescência cilíndrica característica em tons de laranja e vermelho, típica da vegetação australiana.",
+  "rabbit orchid": "Orquídea nativa com formato distintivo que lembra a silhueta de um coelho, com pétalas brancas e detalhes em tons rosados.",
+  "red leschenaultia": "Flor tubular em tons vibrantes de vermelho e laranja, característica da flora do oeste australiano com pétalas delicadas.",
+  "fringed lily twiner": "Lírio trepadeira com pétalas franjadas em tons de lilás e branco, conhecido por suas bordas delicadamente recortadas.",
+  "golden waitsia": "Flor nativa australiana com pétalas douradas delicadas e centro amarelo brilhante, característica da flora do oeste da Austrália.",
+  "macrozamia": "Planta cíclica primitiva com folhas longas e arqueadas, característica da flora australiana, conhecida por suas sementes grandes e coloridas.",
+  "leafless orchid": "Orquídea única que floresce sem folhas visíveis, com flores delicadas em tons suaves, adaptada a ambientes específicos da Austrália."
+};
 
 /**
  * PhotoSelectionApp – versão estável 🟢
