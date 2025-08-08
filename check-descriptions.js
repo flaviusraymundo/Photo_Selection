@@ -1,5 +1,5 @@
 // Script para verificar descrições incompletas
-const fs = require('fs');
+import fs from 'fs';
 
 // Ler o arquivo JSON
 const data = JSON.parse(fs.readFileSync('public/photoDescriptions.json', 'utf8'));
