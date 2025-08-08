@@ -463,9 +463,20 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
                 console.log(`✅ MATCH ENCONTRADO: "${fileName}" → "${bestKey}" (score: ${bestScore})`);
               } else {
                 console.log(`❌ SEM MATCH: "${fileName}" (melhor: "${bestKey}" com score ${bestScore})`);
+                console.log(`🔍 FOTO SEM DESCRIÇÃO: "${fileName}"`);
               }
             }
           });
+          
+          // Lista final de fotos sem descrição
+          const photosWithoutDescription = finalList.filter(photo => !next[photo.id]);
+          if (photosWithoutDescription.length > 0) {
+            console.log('\n📋 LISTA DE FOTOS SEM DESCRIÇÃO:');
+            photosWithoutDescription.forEach((photo, index) => {
+              console.log(`${index + 1}. ${photo.file?.name || 'Sem nome'}`);
+            });
+            console.log(`\nTotal: ${photosWithoutDescription.length} fotos sem descrição`);
+          }
           
           return next;
         });
