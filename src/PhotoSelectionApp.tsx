@@ -380,43 +380,20 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
   useEffect(() => {
     if (!finalList.length) return;
     
-    console.log('🌸 Auto-preenchendo descrições para', finalList.length, 'fotos escolhidas pelo usuário');
-    console.log('📋 Descrições disponíveis:', photoDescriptions);
-
-    // Pega as descrições na ordem exata do JSON
-    const availableDescriptions = [
-      photoDescriptions["pincushion hakea"],
-      photoDescriptions["ribbon pea"], 
-      photoDescriptions["pixie mops"],
-      photoDescriptions["menzies banksia"],
-      photoDescriptions["rabbit orchid"],
-      photoDescriptions["red leschenaultia"],
-      photoDescriptions["fringed lily twiner"],
-      photoDescriptions["golden waitsia"],
-      photoDescriptions["macrozamia"],
-      photoDescriptions["leafless orchid"]
-    ];
-    
-    
-    if (!availableDescriptions.length) return;
-    
-    console.log('📝 Total de descrições:', availableDescriptions.length);
+    // Simplesmente pega todas as descrições do JSON
+    const allDescriptions = Object.values(photoDescriptions);
 
     setDescriptions(prev => {
       const next = { ...prev };
       
       finalList.forEach((photo, index) => {
-        // Se já tem descrição (editada pelo usuário), não sobrescreve
-        if (next[photo.id]) return;
-        
-        // Distribui as descrições ciclicamente entre as fotos ESCOLHIDAS
-        const descriptionIndex = index % availableDescriptions.length;
-        next[photo.id] = availableDescriptions[descriptionIndex];
-        
-        console.log(`📸 Foto ${index + 1}: "${photo.file?.name}" → "${availableDescriptions[descriptionIndex].substring(0, 50)}..."`);
+        // Só preenche se não tem descrição ainda
+        if (!next[photo.id]) {
+          const descIndex = index % allDescriptions.length;
+          next[photo.id] = allDescriptions[descIndex];
+        }
       });
-      
-      console.log('✅ Auto-preenchimento concluído para as fotos escolhidas!');
+        
       return next;
     });
   }, [finalList]);
