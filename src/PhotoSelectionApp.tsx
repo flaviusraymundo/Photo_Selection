@@ -373,6 +373,46 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
     setDescriptions((prev) => ({ ...prev, [id]: val }));
   };
 
+  // --- AUTO-PREENCHIMENTO ----------------------------------------------
+  useEffect(() => {
+    if (!finalList.length) return;       // nada a fazer
+
+    // Construímos um mapa só uma vez p/ lookup rápido
+    const index = {};
+    Object.entries(photoDescriptions).forEach(([title, description]) => {
+      index[slug(title)] = description;        // ex.: "antiseptic-bush" -> "..."
+    });
+
+    setDescriptions(prev => {
+      const next = { ...prev };
+
+      finalList.forEach(p => {
+        const base = slug(p.file?.name ?? "");   // nome "limpo" da foto
+        if (next[p.id]) return;                 // já preenchido manualmente
+
+        // procura por correspondência exata ou inclusiva
+        Object.keys(index).forEach(key => {
+          if (base.includes(key) || key.includes(base)) {
+            next[p.id] = index[key];
+          }
+        });
+      });
+
+      return next;
+    });
+  }, [finalList]);
+  // ----------------------------------------------------------------------
+
+  /** Normaliza strings: lower case, sem extensão, tira acentos, troca
+   *  espaços/underscores por hífens – facilita matching.               */
+  function slug(str) {
+    return str
+      .toLowerCase()
+      .replace(/\.[^/.]+$/, "")               // remove extensão
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // remove acentos
+      .replace(/[_\s]+/g, "-");              // espaços/_ -> hífen
+  }
+
   const exportPDF = async () => {
     setExporting(true);
     const { jsPDF } = await import("jspdf");
