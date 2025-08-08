@@ -383,9 +383,7 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
     const loadDescriptions = async () => {
       try {
         const response = await fetch('/photoDescriptions.json');
-        console.log('Response status:', response.status);
         const flowerData = await response.json();
-        console.log('Loaded flower data:', Object.keys(flowerData));
         
         setDescriptions(prev => {
           const next = { ...prev };
@@ -395,27 +393,61 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
             if (!next[photo.id]) {
               const fileName = photo.file?.name?.toLowerCase() || '';
               const fileNameClean = fileName.replace(/\.[^/.]+$/, ''); // remove extensão
-              console.log('Processing file:', fileName, '-> clean:', fileNameClean);
               
-              // Procurar APENAS match exato 100%
-              let matchedFlower = null;
-              let matchedKey = null;
+              // Procurar match com sistema de pontuação
+              let bestMatch = null;
+              let bestScore = 0;
+              let bestKey = null;
               
-              // Buscar apenas match exato
+              // Normalizar nome do arquivo
+              const normalizedFileName = fileNameClean
+                .replace(/[-_\s]+/g, ' ')
+                .trim();
+              
               Object.entries(flowerData).forEach(([key, flower]) => {
-                // APENAS match exato da chave
-                if (fileNameClean === key) {
-                  matchedFlower = flower;
-                  matchedKey = key;
-                  return; // Para no primeiro match exato
+                const normalizedKey = key.replace(/[-_]+/g, ' ');
+                let score = 0;
+                
+                // Match exato (prioridade máxima)
+                if (normalizedFileName === normalizedKey) {
+                  score = 1000;
+                }
+                // Nome do arquivo contém a chave completa
+                else if (normalizedFileName.includes(normalizedKey)) {
+                  score = 500 + normalizedKey.length;
+                }
+                // Chave contém o nome do arquivo
+                else if (normalizedKey.includes(normalizedFileName)) {
+                  score = 300 + normalizedFileName.length;
+                }
+                // Match por palavras individuais
+                else {
+                  const fileWords = normalizedFileName.split(' ');
+                  const keyWords = normalizedKey.split(' ');
+                  
+                  fileWords.forEach(fileWord => {
+                    if (fileWord.length > 2) { // Ignora palavras muito pequenas
+                      keyWords.forEach(keyWord => {
+                        if (keyWord.includes(fileWord) || fileWord.includes(keyWord)) {
+                          score += 50;
+                        }
+                      });
+                    }
+                  });
+                }
+                
+                if (score > bestScore) {
+                  bestScore = score;
+                  bestMatch = flower;
+                  bestKey = key;
                 }
               });
               
-              if (matchedFlower) {
-                next[photo.id] = `${matchedFlower.title}\n\n${matchedFlower.description}`;
-                console.log('Description set for:', fileName, 'using:', matchedKey, '(EXACT MATCH)');
+              if (bestMatch && bestScore > 100) {
+                next[photo.id] = `${bestMatch.title}\n\n${bestMatch.description}`;
+                console.log(`Match found: "${fileName}" → "${bestKey}" (score: ${bestScore})`);
               } else {
-                console.log('No match found for:', fileName);
+                console.log(`No good match for: "${fileName}" (best score: ${bestScore})`);
               }
             }
           });
