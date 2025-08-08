@@ -103,16 +103,17 @@ export default function PhotoSelectionApp() {
     const autoDescriptions = {};
     finalList.forEach(photo => {
       if (photo && photo.file) {
-        // Remove extensão do arquivo para buscar no JSON
-        const fileName = photo.file.name.replace(/\.[^/.]+$/, "").toLowerCase();
+        // Remove extensão e normaliza o nome do arquivo para buscar no JSON
+        const fileName = photo.file.name
+          .replace(/\.[^/.]+$/, "") // remove extensão
+          .toLowerCase()
+          .trim();
         const description = photoDescriptions[fileName];
         if (description) {
           autoDescriptions[photo.id] = description;
         }
       }
     });
-    setDescriptions(prev => ({ ...autoDescriptions, ...prev }));
-  }, [finalList]);
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 flex flex-col items-center">
