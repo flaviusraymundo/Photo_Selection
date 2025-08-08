@@ -394,46 +394,64 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
               const fileName = photo.file?.name?.toLowerCase() || '';
               const fileNameClean = fileName.replace(/\.[^/.]+$/, ''); // remove extensão
               
-              // Procurar match com sistema de pontuação
+              // Sistema de matching melhorado
               let bestMatch = null;
               let bestScore = 0;
               let bestKey = null;
               
-              // Normalizar nome do arquivo
+              // Normalizar nome do arquivo - mais agressivo
               const normalizedFileName = fileNameClean
-                .replace(/[-_\s]+/g, ' ')
+                .replace(/[-_\s\.]+/g, ' ')
+                .replace(/\s+/g, ' ')
                 .trim();
               
               Object.entries(flowerData).forEach(([key, flower]) => {
-                const normalizedKey = key.replace(/[-_]+/g, ' ');
+                const normalizedKey = key.replace(/[-_]+/g, ' ').toLowerCase();
                 let score = 0;
                 
-                // Match exato (prioridade máxima)
+                // 1. Match exato (prioridade máxima)
                 if (normalizedFileName === normalizedKey) {
                   score = 1000;
                 }
-                // Nome do arquivo contém a chave completa
+                // 2. Nome do arquivo contém a chave completa
                 else if (normalizedFileName.includes(normalizedKey)) {
                   score = 500 + normalizedKey.length;
                 }
-                // Chave contém o nome do arquivo
+                // 3. Chave contém o nome do arquivo
                 else if (normalizedKey.includes(normalizedFileName)) {
                   score = 300 + normalizedFileName.length;
                 }
-                // Match por palavras individuais
+                // 4. Match por palavras individuais (melhorado)
                 else {
                   const fileWords = normalizedFileName.split(' ');
                   const keyWords = normalizedKey.split(' ');
                   
+                  let wordMatches = 0;
                   fileWords.forEach(fileWord => {
-                    if (fileWord.length > 2) { // Ignora palavras muito pequenas
-                      keyWords.forEach(keyWord => {
-                        if (keyWord.includes(fileWord) || fileWord.includes(keyWord)) {
-                          score += 50;
+                    keyWords.forEach(keyWord => {
+                      // Match exato de palavra
+                      if (fileWord === keyWord) {
+                        score += 100;
+                        wordMatches++;
+                      }
+                      // Uma palavra contém a outra
+                      else if (keyWord.includes(fileWord) || fileWord.includes(keyWord)) {
+                        score += 50;
+                        wordMatches++;
+                      }
+                      // Match parcial (pelo menos 3 caracteres)
+                      else if (fileWord.length >= 3 && keyWord.length >= 3) {
+                        if (fileWord.substring(0, 3) === keyWord.substring(0, 3)) {
+                          score += 25;
                         }
-                      });
-                    }
+                      }
+                    });
                   });
+                  
+                  // Bonus se múltiplas palavras fazem match
+                  if (wordMatches > 1) {
+                    score += wordMatches * 25;
+                  }
                 }
                 
                 if (score > bestScore) {
@@ -443,11 +461,26 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
                 }
               });
               
-              if (bestMatch && bestScore > 100) {
+              // Reduzir threshold para pegar mais matches
+              if (bestMatch && bestScore > 25) {
                 next[photo.id] = `${bestMatch.title}\n\n${bestMatch.description}`;
                 console.log(`Match found: "${fileName}" → "${bestKey}" (score: ${bestScore})`);
               } else {
                 console.log(`No good match for: "${fileName}" (best score: ${bestScore})`);
+                
+                // Debug: mostrar as 3 melhores opções
+                const allScores = Object.entries(flowerData).map(([key, flower]) => {
+                  const normalizedKey = key.replace(/[-_]+/g, ' ').toLowerCase();
+                  let debugScore = 0;
+                  
+                  if (normalizedFileName.includes(normalizedKey) || normalizedKey.includes(normalizedFileName)) {
+                    debugScore = 10;
+                  }
+                  
+                  return { key, score: debugScore, title: flower.title };
+                }).sort((a, b) => b.score - a.score).slice(0, 3);
+                
+                console.log(`Top 3 candidates for "${fileName}":`, allScores);
               }
             }
           });
