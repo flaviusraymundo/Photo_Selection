@@ -378,36 +378,45 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
 
   // --- AUTO-PREENCHIMENTO ----------------------------------------------
   useEffect(() => {
-    if (!finalList.length || Object.keys(descriptions).length > 0) return;
+    if (!finalList.length) return;
+    if (!photoDescriptions || Object.keys(photoDescriptions).length === 0) return;
 
-    const newDescriptions = {};
+    console.log('🔍 Starting auto-fill...');
+    console.log('📋 PhotoDescriptions keys:', Object.keys(photoDescriptions));
+    console.log('📸 FinalList files:', finalList.map(p => p.file?.name));
 
-    finalList.forEach(photo => {
-      // Pula se já tem descrição (edição manual)
-      console.log('🔍 Checking file:', `"${fileName}"`);
+    // Função para normalizar strings
+    const slug = (s) => 
+      s.toLowerCase()
+       .replace(/\.[^/.]+$/, '')                    // remove extensão
+       .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // remove acentos
+       .replace(/[^a-z0-9]+/g, ' ')                 // só letras/números
+       .trim();
+
+    setDescriptions(prev => {
+      const next = { ...prev };
       
-      Object.entries(photoDescriptions).forEach(([key, description]) => {
-        const keyWords = key.toLowerCase().split(' ');
-        console.log(`  📝 Comparing "${fileName}" with "${key}" →`, keyWords);
+      finalList.forEach(photo => {
+        if (next[photo.id]) return; // já tem descrição (editada pelo usuário)
         
-        // Verifica se todas as palavras da chave estão no nome do arquivo
-        const allWordsMatch = keyWords.every(word => fileName.includes(word));
-        console.log(`    🔎 All words match: ${allWordsMatch}`);
+        const fileName = slug(photo.file?.name || '');
+        console.log(`🔍 Processing: "${fileName}"`);
         
-        if (allWordsMatch) {
-          console.log('✅ MATCH FOUND!', key, '→', fileName);
-          newDescriptions[photo.id] = description;
-        }
+        Object.entries(photoDescriptions).forEach(([key, description]) => {
+          const keySlug = slug(key);
+          console.log(`  📝 Comparing with: "${keySlug}"`);
+          
+          // Match bidirecional: arquivo contém chave OU chave contém arquivo
+          if (fileName.includes(keySlug) || keySlug.includes(fileName)) {
+            console.log(`✅ MATCH! "${fileName}" ↔ "${keySlug}"`);
+            next[photo.id] = description;
+          }
+        });
       });
+      
+      return next;
     });
-
-    console.log('🎯 Auto descriptions found:', newDescriptions);
-    
-    // Só atualiza se encontrou algo e não tem descrições ainda
-    if (Object.keys(newDescriptions).length > 0) {
-      setDescriptions(newDescriptions);
-    }
-  }, [finalList, setDescriptions]);
+  }, [finalList, photoDescriptions]);
   // ----------------------------------------------------------------------
 
 
