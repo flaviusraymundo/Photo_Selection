@@ -325,6 +325,14 @@ function WelcomeStep({ startProcess }) {
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="text-center space-y-8 max-w-lg mx-auto">
+        <div className="flex justify-center mb-6">
+          <img 
+            src="/Logo 111.png" 
+            alt="Logo" 
+            className="h-24 w-auto object-contain"
+          />
+        </div>
+        
         <div className="space-y-4">
           <h1 className="text-5xl font-bold text-gray-800 mb-2">
             Diagnóstico Avançado em Terapia Vibracional
