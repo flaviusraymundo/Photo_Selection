@@ -382,8 +382,20 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
     
     console.log('🌸 Auto-preenchendo descrições para', finalList.length, 'fotos escolhidas pelo usuário');
 
-    // Pega as descrições disponíveis do JSON
-    const availableDescriptions = Object.values(photoDescriptions);
+    // Pega as descrições EXATAS do JSON que você enviou
+    const availableDescriptions = [
+      photoDescriptions["pincushion hakea"],
+      photoDescriptions["ribbon pea"], 
+      photoDescriptions["pixie mops"],
+      photoDescriptions["menzies banksia"],
+      photoDescriptions["rabbit orchid"],
+      photoDescriptions["red leschenaultia"],
+      photoDescriptions["fringed lily twiner"],
+      photoDescriptions["golden waitsia"],
+      photoDescriptions["macrozamia"],
+      photoDescriptions["leafless orchid"]
+    ].filter(Boolean); // remove undefined se alguma chave não existir
+    
     if (!availableDescriptions.length) return;
 
     setDescriptions(prev => {
