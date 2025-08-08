@@ -382,8 +382,16 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
     // Carregar descrições do arquivo JSON
     const loadDescriptions = async () => {
       try {
+        console.log('🔄 Carregando descrições...');
         const response = await fetch('/photoDescriptions.json');
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
         const flowerData = await response.json();
+        console.log('✅ JSON carregado com sucesso!');
+        console.log(`📊 Total de essências no JSON: ${Object.keys(flowerData).length}`);
         
         setDescriptions(prev => {
           const next = { ...prev };
@@ -394,6 +402,8 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
               const fileName = photo.file?.name?.toLowerCase() || '';
               const fileNameClean = fileName.replace(/\.[^/.]+$/, ''); // remove extensão
               
+              console.log(`\n🔍 Processando: "${fileName}"`);
+              
               // Sistema de matching melhorado
               let bestMatch = null;
               let bestScore = 0;
@@ -401,53 +411,28 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
               
               // Normalizar nome do arquivo - mais agressivo
               const normalizedFileName = fileNameClean
-                .replace(/[-_\s\.]+/g, ' ')
+                .replace(/[-_\s\.]+/g, '')
                 .replace(/\s+/g, ' ')
                 .trim();
               
               Object.entries(flowerData).forEach(([key, flower]) => {
-                // Normalizar ambos para comparação simples
-                const normalizedKey = key.replace(/[-_]+/g, ' ').toLowerCase().trim();
-                const keyForMatch = key.toLowerCase().replace(/[-_]+/g, '');
-                const fileForMatch = normalizedFileName.toLowerCase().replace(/[-_\s]+/g, '');
+                // Normalizar chave do JSON
+                const keyForMatch = key.toLowerCase().replace(/[-_\s]+/g, '');
+                const fileForMatch = normalizedFileName.toLowerCase();
                 
                 let score = 0;
-                
-                console.log(`Tentando: "${fileName}" vs "${key}"`);
                 
                 // 1. Match exato da chave (mais provável)
                 if (fileForMatch === keyForMatch) {
                   score = 1000;
-                  console.log(`  ✅ MATCH EXATO: ${score}`);
                 }
                 // 2. Nome do arquivo contém a chave
                 else if (fileForMatch.includes(keyForMatch)) {
                   score = 500;
-                  console.log(`  ✅ ARQUIVO CONTÉM CHAVE: ${score}`);
                 }
                 // 3. Chave contém o nome do arquivo  
                 else if (keyForMatch.includes(fileForMatch)) {
                   score = 300;
-                  console.log(`  ✅ CHAVE CONTÉM ARQUIVO: ${score}`);
-                }
-                // 4. Match por palavras (mais simples)
-                else {
-                  const fileWords = normalizedFileName.split(' ').filter(w => w.length > 2);
-                  const keyWords = normalizedKey.split(' ').filter(w => w.length > 2);
-                  
-                  let matches = 0;
-                  fileWords.forEach(fileWord => {
-                    keyWords.forEach(keyWord => {
-                      if (fileWord === keyWord) {
-                        matches++;
-                        score += 100;
-                      }
-                    });
-                  });
-                  
-                  if (matches > 0) {
-                    console.log(`  ✅ MATCH POR PALAVRAS: ${matches} palavras, score: ${score}`);
-                  }
                 }
                 
                 if (score > bestScore) {
@@ -458,12 +443,11 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
               });
               
               // Threshold baixo já que você nomeou os arquivos certinho
-              if (bestMatch && bestScore > 50) {
+              if (bestMatch && bestScore >= 300) {
                 next[photo.id] = `${bestMatch.title}\n\n${bestMatch.description}`;
                 console.log(`✅ MATCH ENCONTRADO: "${fileName}" → "${bestKey}" (score: ${bestScore})`);
               } else {
-                console.log(`❌ SEM MATCH: "${fileName}" (melhor: "${bestKey}" com score ${bestScore})`);
-                console.log(`🔍 FOTO SEM DESCRIÇÃO: "${fileName}"`);
+                console.log(`❌ SEM MATCH: "${fileName}" (melhor tentativa: "${bestKey}" com score ${bestScore})`);
               }
             }
           });
@@ -471,17 +455,19 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
           // Lista final de fotos sem descrição
           const photosWithoutDescription = finalList.filter(photo => !next[photo.id]);
           if (photosWithoutDescription.length > 0) {
-            console.log('\n📋 LISTA DE FOTOS SEM DESCRIÇÃO:');
+            console.log('\n📋 FOTOS SEM DESCRIÇÃO:');
             photosWithoutDescription.forEach((photo, index) => {
               console.log(`${index + 1}. ${photo.file?.name || 'Sem nome'}`);
             });
-            console.log(`\nTotal: ${photosWithoutDescription.length} fotos sem descrição`);
+          } else {
+            console.log('🎉 Todas as fotos têm descrição!');
           }
           
           return next;
         });
       } catch (error) {
-        console.error('Erro ao carregar descrições:', error);
+        console.error('❌ Erro ao carregar descrições:', error);
+        console.log('🔧 Verifique se o arquivo public/photoDescriptions.json existe e tem JSON válido');
       }
     };
 
