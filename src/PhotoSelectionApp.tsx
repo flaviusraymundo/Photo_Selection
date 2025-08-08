@@ -379,29 +379,31 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
   // --- AUTO-PREENCHIMENTO ----------------------------------------------
   useEffect(() => {
     if (!finalList.length) return;
-    if (!photoDescriptions || Object.keys(photoDescriptions).length === 0) return;
+    
+    console.log('🌸 Auto-preenchendo descrições para', finalList.length, 'fotos escolhidas pelo usuário');
 
-    // Pega todas as descrições disponíveis
-    const descriptions = Object.values(photoDescriptions);
-    console.log('🌸 Auto-preenchendo com', descriptions.length, 'descrições para', finalList.length, 'fotos');
+    // Pega as descrições disponíveis do JSON
+    const availableDescriptions = Object.values(photoDescriptions);
+    if (!availableDescriptions.length) return;
 
     setDescriptions(prev => {
       const next = { ...prev };
       
       finalList.forEach((photo, index) => {
-        if (next[photo.id]) return; // já tem descrição (editada pelo usuário)
+        // Se já tem descrição (editada pelo usuário), não sobrescreve
+        if (next[photo.id]) return;
         
-        // Distribui as descrições ciclicamente entre todas as fotos
-        const descriptionIndex = index % descriptions.length;
-        next[photo.id] = descriptions[descriptionIndex];
+        // Distribui as descrições ciclicamente entre as fotos ESCOLHIDAS
+        const descriptionIndex = index % availableDescriptions.length;
+        next[photo.id] = availableDescriptions[descriptionIndex];
         
-        console.log(`📸 Foto ${index + 1}: "${photo.file?.name}" → Descrição ${descriptionIndex + 1}`);
+        console.log(`📸 Foto ${index + 1}: "${photo.file?.name}" → "${availableDescriptions[descriptionIndex].substring(0, 50)}..."`);
       });
       
-      console.log('✅ Auto-preenchimento concluído!');
+      console.log('✅ Auto-preenchimento concluído para as fotos escolhidas!');
       return next;
     });
-  }, [finalList, photoDescriptions]);
+  }, [finalList]);
   // ----------------------------------------------------------------------
 
 
