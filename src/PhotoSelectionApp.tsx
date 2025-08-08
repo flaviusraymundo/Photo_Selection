@@ -406,75 +406,47 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
                 .trim();
               
               Object.entries(flowerData).forEach(([key, flower]) => {
-                const normalizedKey = key.replace(/[-_]+/g, ' ').toLowerCase();
+                // Normalizar ambos para comparação simples
+                const normalizedKey = key.replace(/[-_]+/g, ' ').toLowerCase().trim();
+                const keyForMatch = key.toLowerCase().replace(/[-_]+/g, '');
+                const fileForMatch = normalizedFileName.toLowerCase().replace(/[-_\s]+/g, '');
+                
                 let score = 0;
                 
-                // Debug: log tentativas de match
-                console.log(`Tentando match: "${normalizedFileName}" vs "${normalizedKey}"`);
+                console.log(`Tentando: "${fileName}" vs "${key}"`);
                 
-                // 1. Match exato (prioridade máxima)
-                if (normalizedFileName === normalizedKey) {
+                // 1. Match exato da chave (mais provável)
+                if (fileForMatch === keyForMatch) {
                   score = 1000;
-                  console.log(`  → Match EXATO! Score: ${score}`);
+                  console.log(`  ✅ MATCH EXATO: ${score}`);
                 }
-                // 2. Nome do arquivo contém a chave completa (mais restritivo)
-                else if (normalizedFileName.includes(normalizedKey) && normalizedKey.length >= 4) {
-                  // Verificar se é uma palavra completa, não apenas substring
-                  const regex = new RegExp(`\\b${normalizedKey.replace(/\s+/g, '\\s+')}\\b`);
-                  if (regex.test(normalizedFileName)) {
-                    score = 500 + normalizedKey.length;
-                    console.log(`  → Match CONTÉM (arquivo contém chave)! Score: ${score}`);
-                  }
+                // 2. Nome do arquivo contém a chave
+                else if (fileForMatch.includes(keyForMatch)) {
+                  score = 500;
+                  console.log(`  ✅ ARQUIVO CONTÉM CHAVE: ${score}`);
                 }
-                // 3. Chave contém o nome do arquivo (mais restritivo)
-                else if (normalizedKey.includes(normalizedFileName) && normalizedFileName.length >= 4) {
-                  const regex = new RegExp(`\\b${normalizedFileName.replace(/\s+/g, '\\s+')}\\b`);
-                  if (regex.test(normalizedKey)) {
-                    score = 300 + normalizedFileName.length;
-                    console.log(`  → Match CONTÉM (chave contém arquivo)! Score: ${score}`);
-                  }
+                // 3. Chave contém o nome do arquivo  
+                else if (keyForMatch.includes(fileForMatch)) {
+                  score = 300;
+                  console.log(`  ✅ CHAVE CONTÉM ARQUIVO: ${score}`);
                 }
-                // 4. Match por palavras individuais (melhorado)
+                // 4. Match por palavras (mais simples)
                 else {
-                  const fileWords = normalizedFileName.split(' ');
-                  const keyWords = normalizedKey.split(' ');
+                  const fileWords = normalizedFileName.split(' ').filter(w => w.length > 2);
+                  const keyWords = normalizedKey.split(' ').filter(w => w.length > 2);
                   
-                  let wordMatches = 0;
-                  let exactWordMatches = 0;
+                  let matches = 0;
                   fileWords.forEach(fileWord => {
-                    if (fileWord.length < 3) return; // Ignorar palavras muito pequenas
                     keyWords.forEach(keyWord => {
-                      if (keyWord.length < 3) return; // Ignorar palavras muito pequenas
-                      // Match exato de palavra
                       if (fileWord === keyWord) {
+                        matches++;
                         score += 100;
-                        wordMatches++;
-                        exactWordMatches++;
-                      }
-                      // Uma palavra contém a outra (mais restritivo)
-                      else if (fileWord.length >= 4 && keyWord.length >= 4 && 
-                               (keyWord.includes(fileWord) || fileWord.includes(keyWord))) {
-                        score += 50;
-                        wordMatches++;
-                      }
-                      // Match parcial (pelo menos 4 caracteres)
-                      else if (fileWord.length >= 5 && keyWord.length >= 5) {
-                        if (fileWord.substring(0, 4) === keyWord.substring(0, 4)) {
-                          score += 25;
-                        }
                       }
                     });
                   });
                   
-                  // Bonus apenas para matches exatos de múltiplas palavras
-                  if (exactWordMatches > 1) {
-                    score += wordMatches * 25;
-                  }
-                  
-                  // Penalizar se há muita diferença no número de palavras
-                  const wordDiff = Math.abs(fileWords.length - keyWords.length);
-                  if (wordDiff > 2) {
-                    score -= wordDiff * 10;
+                  if (matches > 0) {
+                    console.log(`  ✅ MATCH POR PALAVRAS: ${matches} palavras, score: ${score}`);
                   }
                 }
                 
@@ -485,26 +457,12 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
                 }
               });
               
-              // Threshold mais alto para evitar matches ruins
-              if (bestMatch && bestScore > 25) {
+              // Threshold baixo já que você nomeou os arquivos certinho
+              if (bestMatch && bestScore > 50) {
                 next[photo.id] = `${bestMatch.title}\n\n${bestMatch.description}`;
                 console.log(`✅ MATCH ENCONTRADO: "${fileName}" → "${bestKey}" (score: ${bestScore})`);
               } else {
-                console.log(`❌ SEM MATCH: "${fileName}" (melhor score: ${bestScore})`);
-                
-                // Debug: mostrar as 3 melhores opções
-                const allScores = Object.entries(flowerData).map(([key, flower]) => {
-                  const normalizedKey = key.replace(/[-_]+/g, ' ').toLowerCase();
-                  let debugScore = 0;
-                  
-                  if (normalizedFileName.includes(normalizedKey) || normalizedKey.includes(normalizedFileName)) {
-                    debugScore = 10;
-                  }
-                  
-                  return { key, score: debugScore, title: flower.title };
-                }).sort((a, b) => b.score - a.score).slice(0, 3);
-                
-                console.log(`Top 3 candidates for "${fileName}":`, allScores);
+                console.log(`❌ SEM MATCH: "${fileName}" (melhor: "${bestKey}" com score ${bestScore})`);
               }
             }
           });
