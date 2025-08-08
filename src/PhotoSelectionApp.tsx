@@ -393,10 +393,12 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
         console.log('✅ JSON carregado com sucesso!');
         console.log(`📊 Total de essências no JSON: ${Object.keys(flowerData).length}`);
         
-        // Debug: mostrar algumas chaves do JSON
+        // Debug: mostrar as chaves do JSON
         const keys = Object.keys(flowerData);
-        console.log('🔑 Primeiras 10 chaves do JSON:', keys.slice(0, 10));
-        console.log('🔑 Últimas 10 chaves do JSON:', keys.slice(-10));
+        console.log('🔑 Todas as chaves do JSON:');
+        keys.forEach((key, index) => {
+          console.log(`  ${index + 1}. "${key}"`);
+        });
         
         setDescriptions(prev => {
           const next = { ...prev };
