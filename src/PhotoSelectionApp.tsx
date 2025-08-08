@@ -59,7 +59,7 @@ export default function PhotoSelectionApp() {
       const mockPhotos = samplePhotoNames.map((fileName, i) => ({
         id: `sample_${i}`,
         file: { name: fileName }, // Mock file object
-        url: `/sample-photos/${fileName}`,
+        url: `./sample-photos/${fileName}`,
         status: "neutral",
       }));
       setPhotos(shuffle(mockPhotos));
@@ -327,7 +327,7 @@ function WelcomeStep({ startProcess }) {
       <div className="text-center space-y-8 max-w-lg mx-auto">
         <div className="flex justify-center mb-6">
           <img 
-            src="/Logo 111.png" 
+            src="./Logo 111.png" 
             alt="Logo" 
             className="h-72 w-auto object-contain"
           />
