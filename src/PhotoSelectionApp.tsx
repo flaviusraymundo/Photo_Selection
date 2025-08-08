@@ -679,4 +679,45 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
   };
 
   return (
-    <div className="max
+    <div className="max-w-3xl mx-auto">
+      <h2 className="text-2xl font-semibold mb-6 text-center">
+        4. Relatório Final
+      </h2>
+      <div className="space-y-6">
+        {finalList.map((p, i) => (
+          <div
+            key={p.id}
+            className="flex flex-col sm:flex-row items-center gap-4 bg-white shadow rounded-lg p-4"
+          >
+            <img
+              src={URL.createObjectURL(p.file)}
+              alt={`sel_${i}`}
+              className="h-24 w-24 object-cover rounded-lg border"
+            />
+            <div className="flex-1 w-full">
+              <h3 className="font-medium text-lg truncate mb-2">
+                {p.file?.name?.replace(/\.[^/.]+$/, "") || `Foto ${i + 1}`}
+              </h3>
+              <textarea
+                rows={2}
+                placeholder="Digite características/descrição..."
+                value={descriptions[p.id] || ""}
+                onChange={(e) => handleChange(p.id, e.target.value)}
+                className="w-full p-2 border rounded-md resize-none"
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="text-center mt-6">
+        <button
+          onClick={exportPDF}
+          disabled={exporting}
+          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          {exporting ? "Gerando PDF…" : "Exportar PDF"}
+        </button>
+      </div>
+    </div>
+  );
+}
