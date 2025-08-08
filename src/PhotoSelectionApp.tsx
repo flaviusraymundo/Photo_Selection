@@ -100,43 +100,59 @@ export default function PhotoSelectionApp() {
 
   // Carrega descrições automáticas quando finalList muda
   useEffect(() => {
-    console.log('=== INICIANDO CARREGAMENTO DE DESCRIÇÕES ===');
-    console.log('finalList:', finalList);
-    console.log('photoDescriptions disponíveis:', photoDescriptions);
-    
+    console.log('🔍 CARREGANDO DESCRIÇÕES...');
+    console.log('Fotos no relatório:', finalList.length);
+    console.log('Descrições disponíveis:', Object.keys(photoDescriptions));
+
     const autoDescriptions = {};
-    finalList.forEach(photo => {
-      if (photo && photo.file) {
-        console.log('Processando foto:', photo);
-        console.log('Nome original do arquivo:', photo.file.name);
-        
-        // Remove extensão e normaliza o nome do arquivo para buscar no JSON
-        const fileName = photo.file.name
-          .replace(/\.[^/.]+$/, "") // remove extensão
-          .toLowerCase()
-          .trim();
-        
-        console.log('Nome normalizado para busca:', fileName);
-        console.log('Chaves disponíveis no JSON:', Object.keys(photoDescriptions));
-        
-        const description = photoDescriptions[fileName];
-        if (description) {
-          console.log('✅ Descrição encontrada:', description);
-          autoDescriptions[photo.id] = description;
+    
+    finalList.forEach((photo, index) => {
+      if (!photo || !photo.file) {
+        console.log(`❌ Foto ${index + 1}: sem arquivo`);
+        return;
+      }
+
+      const originalName = photo.file.name;
+      const nameWithoutExt = originalName.replace(/\.[^/.]+$/, "");
+      const normalizedName = nameWithoutExt.toLowerCase().trim();
+      
+      console.log(`📸 Foto ${index + 1}:`);
+      console.log(`   Original: "${originalName}"`);
+      console.log(`   Sem extensão: "${nameWithoutExt}"`);
+      console.log(`   Normalizado: "${normalizedName}"`);
+      
+      // Tenta encontrar a descrição
+      let description = null;
+      
+      // 1. Busca exata (normalizada)
+      if (photoDescriptions[normalizedName]) {
+        description = photoDescriptions[normalizedName];
+        console.log(`   ✅ Encontrou (normalizado): "${description.substring(0, 50)}..."`);
+      }
+      // 2. Busca sem normalização
+      else if (photoDescriptions[nameWithoutExt]) {
+        description = photoDescriptions[nameWithoutExt];
+        console.log(`   ✅ Encontrou (exato): "${description.substring(0, 50)}..."`);
+      }
+      // 3. Busca case-insensitive
+      else {
+        const foundKey = Object.keys(photoDescriptions).find(key => 
+          key.toLowerCase() === normalizedName
+        );
+        if (foundKey) {
+          description = photoDescriptions[foundKey];
+          console.log(`   ✅ Encontrou (case-insensitive): "${description.substring(0, 50)}..."`);
         } else {
-          console.log('❌ Descrição NÃO encontrada para:', fileName);
-          console.log('Tentando busca exata...');
-          // Tenta busca exata sem normalização
-          const exactMatch = photoDescriptions[photo.file.name.replace(/\.[^/.]+$/, "")];
-          if (exactMatch) {
-            console.log('✅ Encontrou com busca exata:', exactMatch);
-            autoDescriptions[photo.id] = exactMatch;
-          }
+          console.log(`   ❌ NÃO encontrou descrição`);
         }
       }
+      
+      if (description) {
+        autoDescriptions[photo.id] = description;
+      }
     });
-    console.log('=== RESULTADO FINAL ===');
-    console.log('Descrições automáticas carregadas:', autoDescriptions);
+    
+    console.log('📋 RESULTADO:', Object.keys(autoDescriptions).length, 'descrições carregadas');
     setDescriptions(prev => ({ ...prev, ...autoDescriptions }));
   }, [finalList]);
 
