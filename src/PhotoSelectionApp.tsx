@@ -456,6 +456,16 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
                 placeholder="Digite características/descrição..."
                 value={descriptions[p.id] || ""}
                 onChange={(e) => handleChange(p.id, e.target.value)}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="text-center mt-6">
+        <button
+          onClick={exportPDF}
+          disabled={exporting}
+          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {exporting ? "Gerando PDF…" : "Exportar PDF"}
         </button>
