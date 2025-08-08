@@ -384,17 +384,18 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
 
     finalList.forEach(photo => {
       // Pula se já tem descrição (edição manual)
-      console.log('🔍 Checking file:', fileName);
+      console.log('🔍 Checking file:', `"${fileName}"`);
       
       Object.entries(photoDescriptions).forEach(([key, description]) => {
         const keyWords = key.toLowerCase().split(' ');
-        console.log('  📝 Comparing with:', key, '→', keyWords);
+        console.log(`  📝 Comparing "${fileName}" with "${key}" →`, keyWords);
         
         // Verifica se todas as palavras da chave estão no nome do arquivo
         const allWordsMatch = keyWords.every(word => fileName.includes(word));
+        console.log(`    🔎 All words match: ${allWordsMatch}`);
         
         if (allWordsMatch) {
-          console.log('✅ MATCH FOUND:', key, '→', fileName);
+          console.log('✅ MATCH FOUND!', key, '→', fileName);
           newDescriptions[photo.id] = description;
         }
       });
