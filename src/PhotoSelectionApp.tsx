@@ -409,9 +409,13 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
                 const normalizedKey = key.replace(/[-_]+/g, ' ').toLowerCase();
                 let score = 0;
                 
+                // Debug: log tentativas de match
+                console.log(`Tentando match: "${normalizedFileName}" vs "${normalizedKey}"`);
+                
                 // 1. Match exato (prioridade máxima)
                 if (normalizedFileName === normalizedKey) {
                   score = 1000;
+                  console.log(`  → Match EXATO! Score: ${score}`);
                 }
                 // 2. Nome do arquivo contém a chave completa (mais restritivo)
                 else if (normalizedFileName.includes(normalizedKey) && normalizedKey.length >= 4) {
@@ -419,6 +423,7 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
                   const regex = new RegExp(`\\b${normalizedKey.replace(/\s+/g, '\\s+')}\\b`);
                   if (regex.test(normalizedFileName)) {
                     score = 500 + normalizedKey.length;
+                    console.log(`  → Match CONTÉM (arquivo contém chave)! Score: ${score}`);
                   }
                 }
                 // 3. Chave contém o nome do arquivo (mais restritivo)
@@ -426,6 +431,7 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
                   const regex = new RegExp(`\\b${normalizedFileName.replace(/\s+/g, '\\s+')}\\b`);
                   if (regex.test(normalizedKey)) {
                     score = 300 + normalizedFileName.length;
+                    console.log(`  → Match CONTÉM (chave contém arquivo)! Score: ${score}`);
                   }
                 }
                 // 4. Match por palavras individuais (melhorado)
@@ -480,11 +486,11 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
               });
               
               // Threshold mais alto para evitar matches ruins
-              if (bestMatch && bestScore > 75) {
+              if (bestMatch && bestScore > 25) {
                 next[photo.id] = `${bestMatch.title}\n\n${bestMatch.description}`;
-                console.log(`Match found: "${fileName}" → "${bestKey}" (score: ${bestScore})`);
+                console.log(`✅ MATCH ENCONTRADO: "${fileName}" → "${bestKey}" (score: ${bestScore})`);
               } else {
-                console.log(`No good match for: "${fileName}" (best score: ${bestScore})`);
+                console.log(`❌ SEM MATCH: "${fileName}" (melhor score: ${bestScore})`);
                 
                 // Debug: mostrar as 3 melhores opções
                 const allScores = Object.entries(flowerData).map(([key, flower]) => {
