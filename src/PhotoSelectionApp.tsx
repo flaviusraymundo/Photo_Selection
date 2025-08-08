@@ -312,10 +312,10 @@ function WelcomeStep({ startProcess }) {
       <div className="text-center space-y-8 max-w-lg mx-auto">
         <div className="space-y-4">
           <h1 className="text-5xl font-bold text-gray-800 mb-2">
-            Seleção de Essências Florais
+            Diagnóstico Avançado em Terapia Vibracional
           </h1>
           <p className="text-xl text-gray-600 leading-relaxed">
-            Sistema para classificação e seleção das 7 essências mais impactantes
+            Por Flavius Raymundo
           </p>
         </div>
         
@@ -337,7 +337,7 @@ function WelcomeStep({ startProcess }) {
           <div className="space-y-1">
             <p>• <strong>Etapa 1:</strong> Classificar 88 fotos (Positiva/Negativa/Neutra)</p>
             <p>• <strong>Etapa 2:</strong> Selecionar até 7 fotos mais impactantes</p>
-            <p>• <strong>Etapa 3:</strong> Organizar livremente no espaço</p>
+            <p>• <strong>Etapa 3:</strong> Diagnóstico</p>
             <p>• <strong>Etapa 4:</strong> Gerar relatório em PDF</p>
           </div>
         </div>
