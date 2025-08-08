@@ -292,10 +292,7 @@ function SelectionStep({ photos, chosen, toggleChosen, proceed, previewPhoto, se
                 : "bg-gray-400 cursor-not-allowed"
             }`}
           >
-            {chosen.length > 0 
-              ? "Continuar para Organização" 
-              : "Selecione pelo menos 1 foto"
-            }
+            Continuar para Organização
           </button>
         </div>
       </div>
