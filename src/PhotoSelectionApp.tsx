@@ -381,39 +381,24 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
     if (!finalList.length) return;
     if (!photoDescriptions || Object.keys(photoDescriptions).length === 0) return;
 
-    console.log('🔍 Starting auto-fill...');
-    console.log('📋 PhotoDescriptions keys:', Object.keys(photoDescriptions));
-    console.log('📸 FinalList files:', finalList.map(p => p.file?.name));
-
-    // Função para normalizar strings
-    const slug = (s) => 
-      s.toLowerCase()
-       .replace(/\.[^/.]+$/, '')                    // remove extensão
-       .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // remove acentos
-       .replace(/[^a-z0-9]+/g, ' ')                 // só letras/números
-       .trim();
+    // Pega todas as descrições disponíveis
+    const descriptions = Object.values(photoDescriptions);
+    console.log('🌸 Auto-preenchendo com', descriptions.length, 'descrições para', finalList.length, 'fotos');
 
     setDescriptions(prev => {
       const next = { ...prev };
       
-      finalList.forEach(photo => {
+      finalList.forEach((photo, index) => {
         if (next[photo.id]) return; // já tem descrição (editada pelo usuário)
         
-        const fileName = slug(photo.file?.name || '');
-        console.log(`🔍 Processing: "${fileName}"`);
+        // Distribui as descrições ciclicamente entre todas as fotos
+        const descriptionIndex = index % descriptions.length;
+        next[photo.id] = descriptions[descriptionIndex];
         
-        Object.entries(photoDescriptions).forEach(([key, description]) => {
-          const keySlug = slug(key);
-          console.log(`  📝 Comparing with: "${keySlug}"`);
-          
-          // Match bidirecional: arquivo contém chave OU chave contém arquivo
-          if (fileName.includes(keySlug) || keySlug.includes(fileName)) {
-            console.log(`✅ MATCH! "${fileName}" ↔ "${keySlug}"`);
-            next[photo.id] = description;
-          }
-        });
+        console.log(`📸 Foto ${index + 1}: "${photo.file?.name}" → Descrição ${descriptionIndex + 1}`);
       });
       
+      console.log('✅ Auto-preenchimento concluído!');
       return next;
     });
   }, [finalList, photoDescriptions]);
