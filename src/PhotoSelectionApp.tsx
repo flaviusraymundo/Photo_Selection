@@ -381,16 +381,16 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
     
     // Descrições direto no código
     const descriptions = [
-      "Flor nativa australiana com formato esférico e espinhos radiantes em tons de vermelho e amarelo, lembrando um alfineteiro tradicional.",
-      "Flor delicada com pétalas vermelhas em formato de fita, característica da flora australiana com folhagem verde-acinzentada.",
-      "Flor branca com múltiplas pétalas finas e delicadas, criando um efeito visual que lembra pequenos pompons ou esfregões.",
-      "Banksia com inflorescência cilíndrica característica em tons de laranja e vermelho, típica da vegetação australiana.",
-      "Orquídea nativa com formato distintivo que lembra a silhueta de um coelho, com pétalas brancas e detalhes em tons rosados.",
-      "Flor tubular em tons vibrantes de vermelho e laranja, característica da flora do oeste australiano com pétalas delicadas.",
-      "Lírio trepadeira com pétalas franjadas em tons de lilás e branco, conhecido por suas bordas delicadamente recortadas.",
-      "Flor nativa australiana com pétalas douradas delicadas e centro amarelo brilhante, característica da flora do oeste da Austrália.",
-      "Planta cíclica primitiva com folhas longas e arqueadas, característica da flora australiana, conhecida por suas sementes grandes e coloridas.",
-      "Orquídea única que floresce sem folhas visíveis, com flores delicadas em tons suaves, adaptada a ambientes específicos da Austrália."
+      "Hakea bucculenta, conhecida como pincushion hakea, é uma planta nativa da Austrália Ocidental. Suas flores são pequenas e agrupadas em inflorescências esféricas densas, com estames longos que se projetam para fora, criando uma aparência de alfineteiro. As flores podem variar do creme ao vermelho-alaranjado.",
+      "Kennedia coccinea, conhecida como coral vine ou running postman, é uma trepadeira nativa da Austrália Ocidental. Suas flores são distintivas, com formato de ervilha e cor vermelha vibrante com manchas amarelas. A planta é conhecida por suas flores vistosas que atraem pássaros.",
+      "Conostylis aculeata, conhecida como prickly conostylis, é uma planta perene nativa da Austrália Ocidental. Suas flores são pequenas, amarelas e agrupadas em inflorescências densas. A planta tem folhas estreitas e pontiagudas, adaptadas ao clima mediterrâneo da região.",
+      "Banksia menziesii, conhecida como firewood banksia, é uma árvore nativa da Austrália Ocidental. Suas inflorescências são cilíndricas e podem atingir até 15 cm de comprimento, com cores que variam do rosa ao vermelho-alaranjado. É uma das banksias mais reconhecíveis da região.",
+      "Diuris corymbosa, conhecida como common donkey orchid, é uma orquídea terrestre nativa da Austrália. Suas flores têm uma forma distintiva que lembra orelhas de burro, com pétalas amarelas e manchas marrons. Floresce durante a primavera em solos arenosos.",
+      "Leschenaultia biloba, conhecida como blue leschenaultia, é um arbusto baixo nativo da Austrália Ocidental. Suas flores são tubulares e de cor azul intensa, com pétalas divididas que criam uma forma característica. É muito valorizada em jardins por sua cor vibrante.",
+      "Thysanotus patersonii, conhecida como twining fringe-lily, é uma planta trepadeira nativa da Austrália. Suas flores são roxas com pétalas franjadas distintivas que tremulam ao vento. A planta tem tubérculos subterrâneos e folhas estreitas.",
+      "Waitzia aurea, conhecida como golden waitzia, é uma planta anual nativa da Austrália Ocidental. Suas flores são pequenas, amarelo-douradas e agrupadas em capítulos densos. É uma das muitas espécies de everlasting flowers da região, conhecidas por manterem sua cor quando secas.",
+      "Macrozamia riedlei, conhecida como zamia palm, é uma cicadácea nativa da Austrália Ocidental. Não é uma palmeira verdadeira, mas uma planta primitiva com folhas pinnadas longas. Produz cones grandes e sementes vermelhas brilhantes, mas todas as partes da planta são tóxicas.",
+      "Caladenia flava, conhecida como cowslip orchid, é uma orquídea terrestre nativa da Austrália. Suas flores são amarelas com manchas vermelhas e têm uma forma característica de orquídea. Floresce no final do inverno e início da primavera em solos arenosos."
     ];
 
     setDescriptions(prev => {
