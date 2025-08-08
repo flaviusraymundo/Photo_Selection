@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Upload } from "lucide-react";
+import photoDescriptions from "./data/photoDescriptions.json";
 
 /**
  * PhotoSelectionApp – versão estável 🟢
@@ -96,6 +97,22 @@ export default function PhotoSelectionApp() {
 
   /*************** relatório ***************/
   const finalList = grid.filter(Boolean).map(getPhoto);
+
+  // Carrega descrições automáticas quando finalList muda
+  useEffect(() => {
+    const autoDescriptions = {};
+    finalList.forEach(photo => {
+      if (photo && photo.file) {
+        // Remove extensão do arquivo para buscar no JSON
+        const fileName = photo.file.name.replace(/\.[^/.]+$/, "").toLowerCase();
+        const description = photoDescriptions[fileName];
+        if (description) {
+          autoDescriptions[photo.id] = description;
+        }
+      }
+    });
+    setDescriptions(prev => ({ ...autoDescriptions, ...prev }));
+  }, [finalList]);
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 flex flex-col items-center">
