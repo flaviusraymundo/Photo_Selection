@@ -379,64 +379,58 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
   useEffect(() => {
     if (!finalList.length) return;
     
-    // Descrições das essências florais
-    const flowerDescriptions = [
-      {
-        title: "Antiseptic Bush",
-        description: "(Calocephalus ass. multiflorus)\nO Poder de Limpeza da Luz\nQualidades Positivas - Palavras-Chave:\nintegridade, santidade, limpeza, alerta, foco\nProblema Alvo - Palavras-Chave:\ncomprometedor, influenciado, distraído, indefeso\nNatureza Curativa\nA essência floral para permanecer fiel ao próprio caminho e aceitar na própria vida apenas o que irá sustentar e apoiar a natureza interior. Para a limpeza de influências negativas no ambiente ou de um acúmulo de tais influências dentro de si ao longo do tempo."
-      },
-      {
-        title: "Billy Goat Plum",
-        description: "(Planchonia careya)\nO Poder da Aceitação de Si Mesmo\nQualidades Positivas - Palavras-Chave:\naceitação de si mesmo, amor próprio, conforto com o corpo físico\nProblema Alvo - Palavras-Chave:\ndesconforto com o corpo, vergonha, repulsa por si mesmo\nNatureza Curativa\nPara aqueles que sentem repulsa ou desconforto com seu corpo físico. Ajuda na aceitação e amor pelo próprio corpo, promovendo uma relação saudável com a forma física."
-      },
-      {
-        title: "Black-Eyed Susan",
-        description: "(Tetratheca ericifolia)\nO Poder do Ritmo Interior\nQualidades Positivas - Palavras-Chave:\npaciência, serenidade, ritmo natural, presença\nProblema Alvo - Palavras-Chave:\nimpaciência, pressa, estresse, sempre correndo\nNatureza Curativa\nPara aqueles que estão sempre com pressa e não conseguem desacelerar. Ajuda a encontrar o ritmo natural interior e a viver com mais paciência e serenidade."
-      },
-      {
-        title: "Bottlebrush",
-        description: "(Callistemon linearis)\nO Poder da Renovação\nQualidades Positivas - Palavras-Chave:\nrenovação, mudança positiva, adaptabilidade, crescimento\nProblema Alvo - Palavras-Chave:\nresistência à mudança, apego ao passado, rigidez\nNatureza Curativa\nPara aqueles que têm dificuldade em se adaptar a mudanças e transições na vida. Promove a capacidade de renovação e crescimento através das transformações."
-      },
-      {
-        title: "Bush Fuchsia",
-        description: "(Epacris longiflora)\nO Poder da Intuição\nQualidades Positivas - Palavras-Chave:\nintuição, clareza mental, equilíbrio, sabedoria interior\nProblema Alvo - Palavras-Chave:\nconfusão mental, falta de clareza, desconexão da intuição\nNatureza Curativa\nPara desenvolver a intuição e a clareza mental. Ajuda a equilibrar o intelecto com a sabedoria interior, promovendo decisões mais sábias e conscientes."
-      },
-      {
-        title: "Bush Gardenia",
-        description: "(Gardenia megasperma)\nO Poder da Comunicação do Coração\nQualidades Positivas - Palavras-Chave:\ncomunicação amorosa, expressão do coração, renovação de relacionamentos\nProblema Alvo - Palavras-Chave:\ndificuldade de comunicação, relacionamentos desgastados, frieza emocional\nNatureza Curativa\nPara melhorar a comunicação nos relacionamentos, especialmente quando há frieza ou distanciamento. Promove a expressão amorosa e a renovação dos vínculos afetivos."
-      },
-      {
-        title: "Crowea",
-        description: "(Crowea saligna)\nO Poder da Paz Interior\nQualidades Positivas - Palavras-Chave:\nserenidade, paz interior, equilíbrio emocional, tranquilidade\nProblema Alvo - Palavras-Chave:\nansiedade, preocupação, agitação, nervosismo\nNatureza Curativa\nPara aqueles que sofrem de ansiedade e preocupação constante. Promove a paz interior e o equilíbrio emocional, trazendo serenidade para a mente agitada."
-      },
-      {
-        title: "Dagger Hakea",
-        description: "(Hakea teretifolia)\nO Poder do Perdão\nQualidades Positivas - Palavras-Chave:\nperdão, liberação de ressentimentos, abertura do coração\nProblema Alvo - Palavras-Chave:\nressentimento, amargura, rancor, fechamento emocional\nNatureza Curativa\nPara aqueles que carregam ressentimentos e amargura. Ajuda no processo de perdão e na liberação de emoções negativas que mantêm o coração fechado."
-      },
-      {
-        title: "Dog Rose",
-        description: "(Bauera rubioides)\nO Poder da Coragem\nQualidades Positivas - Palavras-Chave:\ncoragem, confiança, bravura, superação de medos\nProblema Alvo - Palavras-Chave:\nmedo, timidez, falta de confiança, covardia\nNatureza Curativa\nPara aqueles que são dominados pelo medo e pela timidez. Desenvolve a coragem interior e a confiança necessárias para enfrentar os desafios da vida."
-      },
-      {
-        title: "Five Corners",
-        description: "(Styphelia triflora)\nO Poder da Autoestima\nQualidades Positivas - Palavras-Chave:\nautoestima, amor próprio, confiança, aceitação pessoal\nProblema Alvo - Palavras-Chave:\nbaixa autoestima, autocrítica, sentimentos de inadequação\nNatureza Curativa\nPara aqueles que sofrem de baixa autoestima e autocrítica excessiva. Promove o amor próprio e a aceitação pessoal, desenvolvendo uma autoimagem mais positiva."
-      }
-    ];
-
-    setDescriptions(prev => {
-      const next = { ...prev };
-      
-      finalList.forEach((photo, index) => {
-        // Só preenche se não tem descrição ainda
-        if (!next[photo.id]) {
-          const descIndex = index % flowerDescriptions.length;
-          const flower = flowerDescriptions[descIndex];
-          next[photo.id] = `${flower.title}\n\n${flower.description}`;
-        }
-      });
+    // Carregar descrições do arquivo JSON
+    const loadDescriptions = async () => {
+      try {
+        const response = await fetch('/src/data/photoDescriptions copy copy copy copy.json');
+        const flowerData = await response.json();
         
-      return next;
-    });
+        setDescriptions(prev => {
+          const next = { ...prev };
+          
+          finalList.forEach(photo => {
+            // Só preenche se não tem descrição ainda
+            if (!next[photo.id]) {
+              const fileName = photo.file?.name?.toLowerCase() || '';
+              
+              // Procurar match no JSON baseado no nome do arquivo
+              const matchedFlower = Object.values(flowerData).find(flower => {
+                const flowerTitle = flower.title?.toLowerCase() || '';
+                const flowerWords = flowerTitle.split(' ');
+                
+                // Verifica se alguma palavra do título da flor está no nome do arquivo
+                return flowerWords.some(word => 
+                  word.length > 2 && fileName.includes(word)
+                ) || fileName.includes(flowerTitle);
+              });
+              
+              if (matchedFlower) {
+                next[photo.id] = `${matchedFlower.title}\n\n${matchedFlower.description}`;
+              } else {
+                // Fallback: usar uma descrição genérica
+                next[photo.id] = `Essência Floral\n\nDescrição personalizada para ${photo.file?.name || 'esta foto'}.`;
+              }
+            }
+          });
+          
+          return next;
+        });
+      } catch (error) {
+        console.error('Erro ao carregar descrições:', error);
+        // Fallback em caso de erro
+        setDescriptions(prev => {
+          const next = { ...prev };
+          finalList.forEach(photo => {
+            if (!next[photo.id]) {
+              next[photo.id] = `Essência Floral\n\nDescrição para ${photo.file?.name || 'esta foto'}.`;
+            }
+          });
+          return next;
+        });
+      }
+    };
+
+    loadDescriptions();
   }, [finalList]);
   // ----------------------------------------------------------------------
 
