@@ -107,8 +107,8 @@ export default function PhotoSelectionApp() {
     const y = e.clientY - rect.top - dragOffset.y;
     
     // Limitar dentro da área
-    const maxX = rect.width - 200; // largura da foto
-    const maxY = rect.height - 150; // altura da foto
+    const maxX = rect.width - 192; // largura da foto (w-48 = 192px)
+    const maxY = rect.height - 144; // altura da foto (h-36 = 144px)
     
     setPhotoPositions(prev => ({
       ...prev,
@@ -143,13 +143,13 @@ export default function PhotoSelectionApp() {
         const newPositions = { ...prev };
         chosen.forEach((id, index) => {
           if (!newPositions[id]) {
-            // Distribuir em grid inicial - 2 colunas para permitir 4 linhas
-            const cols = 2;
+            // Distribuir em grid inicial
+            const cols = 3;
             const row = Math.floor(index / cols);
             const col = index % cols;
             newPositions[id] = {
-              x: col * 300 + 100,
-              y: row * 180 + 50
+              x: col * 220 + 50,
+              y: row * 160 + 50
             };
           }
         });
@@ -404,7 +404,7 @@ function ArrangeStep({ chosen, photoPositions, getPhoto, handleMouseDown, dragge
       
       <div 
         ref={arrangeAreaRef}
-        className="relative w-full h-[600px] bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg mb-6 overflow-hidden"
+        className="relative w-full h-[800px] bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg mb-6 overflow-hidden"
         style={{ userSelect: 'none' }}
       >
         <div className="absolute top-4 left-4 text-sm text-gray-500 pointer-events-none">
@@ -453,21 +453,18 @@ function ArrangeStep({ chosen, photoPositions, getPhoto, handleMouseDown, dragge
       <div className="flex justify-center gap-4">
         <button
           onClick={() => {
-            // Reset para posições em grid - 2 colunas para 4 linhas
+            // Reset para posições em grid
             const newPositions = {};
             chosen.forEach((id, index) => {
-              const cols = 2;
+              const cols = 3;
               const row = Math.floor(index / cols);
               const col = index % cols;
               newPositions[id] = {
-                x: col * 300 + 100,
-                y: row * 180 + 50
+                x: col * 220 + 50,
+                y: row * 160 + 50
               };
             });
-            // Atualizar posições via callback do pai
-            Object.entries(newPositions).forEach(([id, pos]) => {
-              photoPositions[id] = pos;
-            });
+            setPhotoPositions(prev => ({ ...prev, ...newPositions }));
           }}
           className="px-4 py-2 rounded-xl bg-gray-500 text-white hover:bg-gray-600 transition-colors"
         >
@@ -682,45 +679,4 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
   };
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <h2 className="text-2xl font-semibold mb-6 text-center">
-        4. Relatório Final
-      </h2>
-      <div className="space-y-6">
-        {finalList.map((p, i) => (
-          <div
-            key={p.id}
-            className="flex flex-col sm:flex-row items-center gap-4 bg-white shadow rounded-lg p-4"
-          >
-            <img
-              src={URL.createObjectURL(p.file)}
-              alt={`sel_${i}`}
-              className="h-24 w-24 object-cover rounded-lg border"
-            />
-            <div className="flex-1 w-full">
-              <h3 className="font-medium text-lg truncate mb-2">
-                {p.file?.name?.replace(/\.[^/.]+$/, "") || `Foto ${i + 1}`}
-              </h3>
-              <textarea
-                rows="2"
-                placeholder="Digite características/descrição..."
-                value={descriptions[p.id] || ""}
-                onChange={(e) => handleChange(p.id, e.target.value)}
-                className="w-full p-2 border rounded-md resize-none"
-              />
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="text-center mt-6">
-        <button
-          onClick={exportPDF}
-          disabled={exporting}
-          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          {exporting ? "Gerando PDF…" : "Exportar PDF"}
-        </button>
-      </div>
-    </div>
-  );
-}
+    <div className="max
