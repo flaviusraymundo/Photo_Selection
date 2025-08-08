@@ -56,10 +56,13 @@ export default function PhotoSelectionApp() {
   // Carregar fotos automaticamente na inicialização
   useEffect(() => {
     const loadSamplePhotos = () => {
+      // Detectar se está no GitHub Pages ou Netlify
+      const basePath = window.location.hostname.includes('github.io') ? '/Photo_Selection' : '';
+      
       const mockPhotos = samplePhotoNames.map((fileName, i) => ({
         id: `sample_${i}`,
         file: { name: fileName }, // Mock file object
-        url: `./sample-photos/${fileName}`,
+        url: `${basePath}/sample-photos/${fileName}`,
         status: "neutral",
       }));
       setPhotos(shuffle(mockPhotos));
@@ -322,12 +325,15 @@ export default function PhotoSelectionApp() {
 /* ---------- componentes ---------- */
 
 function WelcomeStep({ startProcess }) {
+  // Detectar se está no GitHub Pages ou Netlify
+  const basePath = window.location.hostname.includes('github.io') ? '/Photo_Selection' : '';
+  
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="text-center space-y-8 max-w-lg mx-auto">
         <div className="flex justify-center mb-6">
           <img 
-            src="/Photo_Selection/Logo 111.png" 
+            src={`${basePath}/Logo 111.png`}
             alt="Logo" 
             className="h-72 w-auto object-contain"
           />
