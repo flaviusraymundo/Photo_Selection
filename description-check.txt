@@ -1,0 +1,226 @@
+VERIFICAÇÃO MANUAL DAS DESCRIÇÕES - photoDescriptions.json
+
+=== LISTA COMPLETA ===
+
+1. antiseptic_bush ✅
+   - Título: "Antiseptic Bush"
+   - Tem descrição completa com todas as seções
+
+2. balga_blackboy ✅
+   - Título: "Balga Blackboy"
+   - Tem descrição completa com todas as seções
+
+3. black_kangaroo_paw ✅
+   - Título: "Black Kangaroo Paw"
+   - Tem descrição completa com todas as seções
+
+4. blue_china_orchid ✅
+   - Título: "Blue China Orchid"
+   - Tem descrição completa com todas as seções
+
+5. blue_leschenaultia ✅
+   - Título: "Blue Leschenaultia"
+   - Tem descrição completa com todas as seções
+
+6. brachycome ✅
+   - Título: "Brachycome"
+   - Tem descrição MUITO COMPLETA (a mais longa)
+
+7. brown_boronia ✅
+   - Título: "Brown Boronia"
+   - Tem descrição completa com todas as seções
+
+8. candle_of_life ✅
+   - Título: "Candle of Life"
+   - Tem descrição completa com todas as seções
+
+9. cape_bluebell ✅
+   - Título: "Cape Bluebell"
+   - Tem descrição completa com todas as seções
+
+10. catspaw ✅
+    - Título: "Catspaw"
+    - Tem descrição completa com todas as seções
+
+11. christmas_tree ✅
+    - Título: "Christmas Tree"
+    - Tem descrição completa com todas as seções
+
+12. correa ✅
+    - Título: "Correa"
+    - Tem descrição completa com todas as seções
+
+13. cowkicks ✅
+    - Título: "Cowkicks"
+    - Tem descrição completa com todas as seções
+
+14. cowslip_orchid ✅
+    - Título: "Cowslip Orchid"
+    - Tem descrição completa com todas as seções
+
+15. dampiera ✅
+    - Título: "Dampiera"
+    - Tem descrição completa com todas as seções
+
+16. donkey_orchid ✅
+    - Título: "Donkey Orchid"
+    - Tem descrição completa com todas as seções
+
+17. fringed_lily_twiner ✅
+    - Título: "Fringed Lily Twiner"
+    - Tem descrição completa com todas as seções
+
+18. fringed_mantis_orchid ✅
+    - Título: "Fringed Mantis Orchid"
+    - Tem descrição completa com todas as seções
+
+19. fuchsia_grevillea ✅
+    - Título: "Fuchsia Grevillea"
+    - Tem descrição MUITO COMPLETA (uma das mais longas)
+
+20. fuchsia_gum ✅
+    - Título: "Fuchsia Gum"
+    - Tem descrição completa com todas as seções
+
+21. geraldton_wax ✅
+    - Título: "Geraldton Wax"
+    - Tem descrição completa com todas as seções
+
+22. giving_hands ✅
+    - Título: "Giving Hands"
+    - Tem descrição completa com todas as seções
+
+23. goddess_grasstree ✅
+    - Título: "Goddess Grasstree"
+    - Tem descrição completa com todas as seções
+
+24. golden_glory_grevillea ✅
+    - Título: "Golden Glory Grevillea"
+    - Tem descrição completa com todas as seções
+
+25. golden_waitsia ✅
+    - Título: "Golden Waitsia"
+    - Tem descrição completa com todas as seções
+
+26. green_rose ✅
+    - Título: "Green Rose"
+    - Tem descrição completa com todas as seções
+
+27. hairy_yellow_pea ✅
+    - Título: "Hairy Yellow Pea"
+    - Tem descrição completa com todas as seções
+
+28. happy_wanderer ✅
+    - Título: "Happy Wanderer"
+    - Tem descrição completa com todas as seções
+
+29. hops_bush ✅
+    - Título: "Hops Bush"
+    - Tem descrição completa com todas as seções
+
+30. hybrid_pink_fairy_cowslip_orchid ✅
+    - Título: "Hybrid Pink Fairy Cowslip Orchid"
+    - Tem descrição completa com todas as seções
+
+31. illyarrie ✅
+    - Título: "Illyarrie"
+    - Tem descrição completa com todas as seções
+
+32. leafless_orchid ✅
+    - Título: "Leafless Orchid"
+    - Tem descrição completa com todas as seções
+
+33. macrozamia ✅
+    - Título: "Macrozamia"
+    - Tem descrição completa com todas as seções
+
+34. many_headed_dryandra ✅
+    - Título: "Many Headed Dryandra"
+    - Tem descrição completa com todas as seções
+
+35. mauve_melaleuca ✅
+    - Título: "Mauve Melaleuca"
+    - Tem descrição completa com todas as seções
+
+36. menzies_banksia ✅
+    - Título: "Menzies Banksia"
+    - Tem descrição completa com todas as seções
+
+37. one_sided_bottlebrush ✅
+    - Título: "One Sided Bottlebrush"
+    - Tem descrição completa com todas as seções
+
+38. orange_leschenaultia ✅
+    - Título: "Orange Leschenaultia"
+    - Tem descrição completa com todas as seções
+
+39. orange_spiked_pea ✅
+    - Título: "Orange Spiked Pea"
+    - Tem descrição completa com todas as seções
+
+40. pale_sundew ✅
+    - Título: "Pale Sundew"
+    - Tem descrição completa com todas as seções
+
+41. parakeelya ✅
+    - Título: "Parakeelya"
+    - Tem descrição completa com todas as seções
+
+42. pincushion_hakea ✅
+    - Título: "Pincushion Hakea"
+    - Tem descrição completa com todas as seções
+
+43. pink_everlasting ✅
+    - Título: "Pink Everlasting"
+    - Tem descrição completa com todas as seções
+
+44. pink_fairy_orchid ✅
+    - Título: "Pink Fairy Orchid"
+    - Tem descrição completa com todas as seções
+
+45. pink_fountain_triggerplant ✅
+    - Título: "Pink Fountain Triggerplant"
+    - Tem descrição completa com todas as seções
+
+46. pink_impatiens ✅
+    - Título: "Pink Impatiens"
+    - Tem descrição completa com todas as seções
+
+47. pink_trumpet_flower ✅
+    - Título: "Pink Trumpet Flower"
+    - Tem descrição completa com todas as seções
+
+48. pixie_mops ✅
+    - Título: "Pixie Mops"
+    - Tem descrição completa com todas as seções
+
+49. ribbon_pea ✅
+    - Título: "Ribbon Pea"
+    - Tem descrição completa com todas as seções
+
+50. silver_princess ✅
+    - Título: "Silver Princess"
+    - Tem descrição completa com todas as seções (RECÉM ADICIONADA)
+
+51. snake_vine ✅
+    - Título: "Snake Vine"
+    - Tem descrição completa com todas as seções (RECÉM ADICIONADA)
+
+52. wa_smokebush ✅
+    - Título: "WA Smokebush"
+    - Tem descrição MUITO COMPLETA (uma das mais longas)
+
+53. white_nymph_waterlily ✅
+    - Título: "White Nymph Waterlily"
+    - Tem descrição MUITO COMPLETA (uma das mais longas)
+
+=== RESUMO ===
+Total de essências: 53
+Todas parecem ter descrições completas ✅
+Nenhuma suspeita de estar incompleta ❌
+
+=== PARA TESTAR ===
+Se ainda encontrar alguma sem descrição, verifique:
+1. O nome do arquivo da foto
+2. Se contém exatamente uma das chaves acima
+3. Se há caracteres especiais ou espaços extras no nome
