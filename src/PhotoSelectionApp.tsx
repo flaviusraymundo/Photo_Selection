@@ -392,28 +392,13 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
         const flowerData = await response.json();
         console.log('✅ JSON carregado com sucesso!');
         
-        // Detectar se é array ou objeto
-        const isArray = Array.isArray(flowerData);
-        console.log(`📊 Formato do JSON: ${isArray ? 'Array' : 'Objeto'}`);
-        console.log(`📊 Total de essências: ${isArray ? flowerData.length : Object.keys(flowerData).length}`);
+        console.log(`📊 Total de essências no JSON: ${Object.keys(flowerData).length}`);
         
-        // Converter array para objeto se necessário
-        const dataAsObject = isArray 
-          ? flowerData.reduce((acc, item, index) => {
-              // Tentar usar o título como chave, senão usar índice
-              const key = item.title 
-                ? item.title.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_')
-                : index.toString();
-              acc[key] = item;
-              return acc;
-            }, {})
-          : flowerData;
-        
-        // Debug: mostrar algumas chaves
-        const keys = Object.keys(dataAsObject);
+        // Debug: mostrar as chaves do JSON
+        const keys = Object.keys(flowerData);
         console.log('🔑 Primeiras 10 chaves:');
         keys.slice(0, 10).forEach((key, index) => {
-          console.log(`  ${index + 1}. "${key}" → "${dataAsObject[key].title}"`);
+          console.log(`  ${index + 1}. "${key}" → "${flowerData[key].title}"`);
         });
         
         setDescriptions(prev => {
@@ -435,7 +420,7 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
               // Normalizar nome do arquivo
               const normalizedFileName = fileNameClean.toLowerCase().trim();
               
-              Object.entries(dataAsObject).forEach(([key, flower]) => {
+              Object.entries(flowerData).forEach(([key, flower]) => {
                 const keyForMatch = key.toLowerCase().trim();
                 const titleForMatch = flower.title?.toLowerCase().trim() || '';
                 
@@ -493,7 +478,7 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
                 }
               });
               
-              // Threshold para matching
+              // Threshold baixo para matching flexível
               if (bestMatch && bestScore >= 200) {
                 next[photo.id] = `${bestMatch.title}\n\n${bestMatch.description}`;
                 console.log(`✅ MATCH ENCONTRADO: "${fileName}" → "${bestKey}" (score: ${bestScore})`);
