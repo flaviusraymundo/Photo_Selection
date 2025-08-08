@@ -744,12 +744,21 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
     const lineH = 14;
     let y = margin;
 
-    // converter arquivo para dataURL
-    const fileToDataURL = (file) =>
-      new Promise((res) => {
-        const reader = new FileReader();
-        reader.onload = () => res(reader.result);
-        reader.readAsDataURL(file);
+    // converter URL para canvas e depois dataURL
+    const urlToDataURL = (url) =>
+      new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+          resolve(canvas.toDataURL('image/jpeg'));
+        };
+        img.onerror = () => resolve(null);
+        img.src = url;
       });
 
     for (let i = 0; i < finalList.length; i++) {
@@ -767,8 +776,13 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
       }
 
       try {
-        const dataURL = await fileToDataURL(p.file);
-        pdf.addImage(dataURL, "JPEG", margin, y, thumb, thumb);
+        // Para fotos sample, usar a URL diretamente
+        if (p.url) {
+          const dataURL = await urlToDataURL(p.url);
+          if (dataURL) {
+            pdf.addImage(dataURL, "JPEG", margin, y, thumb, thumb);
+          }
+        }
       } catch {}
 
       pdf.setFontSize(12).setTextColor("#000");
@@ -799,7 +813,7 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
             className="flex flex-col sm:flex-row items-center gap-4 bg-white shadow rounded-lg p-4"
           >
             <img
-              src={URL.createObjectURL(p.file)}
+              src={p.url}
               alt={`sel_${i}`}
               className="h-24 w-24 object-cover rounded-lg border"
             />
