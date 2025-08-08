@@ -238,8 +238,23 @@ export default function PhotoSelectionApp() {
 
   /*************** relatório ***************/
   const finalList = useMemo(() => {
-    return chosen.map(getPhoto).filter(Boolean);
-  }, [chosen, photos]);
+    // Ordenar fotos baseado na posição (Y primeiro, depois X)
+    const photosWithPositions = chosen.map(id => {
+      const photo = getPhoto(id);
+      const position = photoPositions[id] || { x: 0, y: 0 };
+      return { photo, position, id };
+    }).filter(item => item.photo);
+    
+    // Ordenar: primeiro por Y (cima para baixo), depois por X (esquerda para direita)
+    photosWithPositions.sort((a, b) => {
+      if (Math.abs(a.position.y - b.position.y) < 50) { // Se estão na mesma "linha" (tolerância de 50px)
+        return a.position.x - b.position.x; // Ordenar por X (esquerda para direita)
+      }
+      return a.position.y - b.position.y; // Ordenar por Y (cima para baixo)
+    });
+    
+    return photosWithPositions.map(item => item.photo);
+  }, [chosen, photos, photoPositions]);
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 flex flex-col items-center">
