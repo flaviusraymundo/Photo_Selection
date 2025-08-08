@@ -382,7 +382,7 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
     // Carregar descrições do arquivo JSON
     const loadDescriptions = async () => {
       try {
-        const response = await fetch('/src/data/photoDescriptions copy copy copy copy.json');
+        const response = await fetch('/photoDescriptions.json');
         const flowerData = await response.json();
         
         setDescriptions(prev => {
