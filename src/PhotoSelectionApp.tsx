@@ -383,44 +383,47 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
     console.log('PhotoDescriptions:', photoDescriptions); // DEBUG
     console.log('FinalList files:', finalList.map(p => p.file?.name)); // DEBUG
 
-    setDescriptions(prev => {
-      const next = { ...prev };
+    const autoDescriptions = {};
 
-      finalList.forEach(p => {
-        if (next[p.id]) return; // já preenchido manualmente
+    finalList.forEach(p => {
+      const fileName = (p.file?.name ?? "").toLowerCase().replace(/\.[^/.]+$/, "");
+      console.log('Checking file:', fileName); // DEBUG
+      
+      // Matching direto e simples
+      Object.entries(photoDescriptions).forEach(([key, description]) => {
+        const keyLower = key.toLowerCase();
+        console.log('Comparing with key:', keyLower); // DEBUG
         
-        const fileName = (p.file?.name ?? "").toLowerCase().replace(/\.[^/.]+$/, "");
-        console.log('Checking file:', fileName); // DEBUG
+        // Tenta match direto primeiro
+        if (fileName.includes(keyLower) || keyLower.includes(fileName)) {
+          console.log('MATCH FOUND:', key, '→', fileName); // DEBUG
+          autoDescriptions[p.id] = description;
+          return;
+        }
         
-        // Matching direto e simples
-        Object.entries(photoDescriptions).forEach(([key, description]) => {
-          const keyLower = key.toLowerCase();
-          console.log('Comparing with key:', keyLower); // DEBUG
-          
-          // Tenta match direto primeiro
-          if (fileName.includes(keyLower) || keyLower.includes(fileName)) {
-            console.log('MATCH FOUND:', key, '→', fileName); // DEBUG
-            next[p.id] = description;
-            return;
-          }
-          
-          // Tenta match por palavras individuais
-          const fileWords = fileName.split(/[\s-_]+/).filter(w => w.length > 2);
-          const keyWords = keyLower.split(/[\s-_]+/).filter(w => w.length > 2);
-          
-          const matches = fileWords.filter(fw => 
-            keyWords.some(kw => fw.includes(kw) || kw.includes(fw))
-          );
-          
-          if (matches.length >= Math.min(2, keyWords.length)) {
-            console.log('WORD MATCH FOUND:', key, '→', fileName, 'matches:', matches); // DEBUG
-            next[p.id] = description;
-          }
-        });
+        // Tenta match por palavras individuais
+        const fileWords = fileName.split(/[\s-_]+/).filter(w => w.length > 2);
+        const keyWords = keyLower.split(/[\s-_]+/).filter(w => w.length > 2);
+        
+        const matches = fileWords.filter(fw => 
+          keyWords.some(kw => fw.includes(kw) || kw.includes(fw))
+        );
+        
+        if (matches.length >= Math.min(2, keyWords.length)) {
+          console.log('WORD MATCH FOUND:', key, '→', fileName, 'matches:', matches); // DEBUG
+          autoDescriptions[p.id] = description;
+        }
       });
+    });
 
-      console.log('Final descriptions:', next); // DEBUG
-      return next;
+    console.log('Auto descriptions found:', autoDescriptions); // DEBUG
+    
+    // Só atualiza se encontrou algo E não sobrescreve edições manuais
+    if (Object.keys(autoDescriptions).length > 0) {
+      setDescriptions(prev => ({ ...autoDescriptions, ...prev }));
+    }
+  }, [finalList]);
+  // ----------------------------------------------------------------------
     });
   }, [finalList]);
   // ----------------------------------------------------------------------
