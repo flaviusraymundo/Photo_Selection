@@ -14,7 +14,7 @@ import { Upload } from "lucide-react";
  */
 
 export default function PhotoSelectionApp() {
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(-1); // -1 = welcome, 0 = loading, 1 = classification
   const [photos, setPhotos] = useState([]);            // { id, file, url, status }
   const [currentIdx, setCurrentIdx] = useState(0);
   const [chosen, setChosen] = useState([]);            // ids das 7
@@ -66,8 +66,44 @@ export default function PhotoSelectionApp() {
       setStep(1); // Pula direto para a classificação
     };
 
-    loadSamplePhotos();
+    // Só carrega quando sair da tela de boas-vindas
+    if (step === 0) {
+      loadSamplePhotos();
+    }
   }, []);
+
+  // Atalho Enter na tela de boas-vindas
+  useEffect(() => {
+    const handleWelcomeKeyPress = (e) => {
+      if (step === -1 && e.key === 'Enter') {
+        setStep(0);
+      }
+    };
+    
+    if (step === -1) {
+      window.addEventListener('keydown', handleWelcomeKeyPress);
+      return () => window.removeEventListener('keydown', handleWelcomeKeyPress);
+    }
+  }, [step]);
+
+  // Carregar fotos quando sair da tela de boas-vindas
+  useEffect(() => {
+    if (step === 0) {
+      const loadSamplePhotos = () => {
+        const mockPhotos = samplePhotoNames.map((fileName, i) => ({
+          id: `sample_${i}`,
+          file: { name: fileName }, // Mock file object
+          url: `/sample-photos/${fileName}`,
+          status: "neutral",
+        }));
+        setPhotos(shuffle(mockPhotos));
+        setStep(1); // Pula direto para a classificação
+      };
+      
+      // Pequeno delay para mostrar o loading
+      setTimeout(loadSamplePhotos, 1000);
+    }
+  }, [step]);
 
   /*************** helpers ***************/
   const shuffle = (arr) => arr.sort(() => Math.random() - 0.5);
@@ -207,6 +243,12 @@ export default function PhotoSelectionApp() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 flex flex-col items-center">
+      {step === -1 && (
+        <WelcomeStep 
+          startProcess={() => setStep(0)}
+        />
+      )}
+
       {step === 0 && (
         <UploadStep 
           handleFiles={handleFiles} 
@@ -264,6 +306,45 @@ export default function PhotoSelectionApp() {
 
 /* ---------- componentes ---------- */
 
+function WelcomeStep({ startProcess }) {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center space-y-8 max-w-lg mx-auto">
+        <div className="space-y-4">
+          <h1 className="text-5xl font-bold text-gray-800 mb-2">
+            Seleção de Essências Florais
+          </h1>
+          <p className="text-xl text-gray-600 leading-relaxed">
+            Sistema para classificação e seleção das 7 essências mais impactantes
+          </p>
+        </div>
+        
+        <div className="space-y-4">
+          <button
+            onClick={startProcess}
+            className="px-12 py-4 bg-blue-600 text-white text-xl font-semibold rounded-xl hover:bg-blue-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
+          >
+            Iniciar Processo
+          </button>
+          
+          <p className="text-sm text-gray-500">
+            Pressione <kbd className="px-2 py-1 bg-gray-200 rounded text-xs font-mono">Enter</kbd> ou clique no botão
+          </p>
+        </div>
+        
+        <div className="text-left bg-white p-6 rounded-lg shadow-sm border text-sm text-gray-600 space-y-2">
+          <h3 className="font-semibold text-gray-800 mb-3">Como funciona:</h3>
+          <div className="space-y-1">
+            <p>• <strong>Etapa 1:</strong> Classificar 88 fotos (Positiva/Negativa/Neutra)</p>
+            <p>• <strong>Etapa 2:</strong> Selecionar até 7 fotos mais impactantes</p>
+            <p>• <strong>Etapa 3:</strong> Organizar livremente no espaço</p>
+            <p>• <strong>Etapa 4:</strong> Gerar relatório em PDF</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 function UploadStep({ handleFiles, fileInputRef }) {
   return (
     <div className="text-center space-y-6 max-w-md mx-auto">
