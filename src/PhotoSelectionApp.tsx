@@ -143,13 +143,13 @@ export default function PhotoSelectionApp() {
         const newPositions = { ...prev };
         chosen.forEach((id, index) => {
           if (!newPositions[id]) {
-            // Distribuir em grid inicial
-            const cols = 3;
+            // Distribuir em grid inicial - 2 colunas para permitir 4 linhas
+            const cols = 2;
             const row = Math.floor(index / cols);
             const col = index % cols;
             newPositions[id] = {
-              x: col * 220 + 50,
-              y: row * 170 + 50
+              x: col * 300 + 100,
+              y: row * 180 + 50
             };
           }
         });
@@ -453,15 +453,15 @@ function ArrangeStep({ chosen, photoPositions, getPhoto, handleMouseDown, dragge
       <div className="flex justify-center gap-4">
         <button
           onClick={() => {
-            // Reset para posições em grid
+            // Reset para posições em grid - 2 colunas para 4 linhas
             const newPositions = {};
             chosen.forEach((id, index) => {
-              const cols = 3;
+              const cols = 2;
               const row = Math.floor(index / cols);
               const col = index % cols;
               newPositions[id] = {
-                x: col * 220 + 50,
-                y: row * 170 + 50
+                x: col * 300 + 100,
+                y: row * 180 + 50
               };
             });
             // Atualizar posições via callback do pai
