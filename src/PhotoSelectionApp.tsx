@@ -919,8 +919,20 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
       const statusTxt = p.status === "positive" ? "Positiva" : "Negativa";
       const desc = descriptions[p.id] || "";
 
+      // Melhorar formatação do texto com espaçamento
       const maxW = pageW - margin*2 - thumb - 10;
-      const wrapped = pdf.splitTextToSize(desc, maxW);
+      
+      // Processar o texto para adicionar espaçamento entre seções
+      const formattedDesc = desc
+        .replace(/\n\n/g, '\n \n') // Adiciona linha em branco entre parágrafos
+        .replace(/Qualidades Positivas - Palavras-Chave:/g, '\nQualidades Positivas - Palavras-Chave:')
+        .replace(/Problema Alvo - Palavras-Chave:/g, '\nProblema Alvo - Palavras-Chave:')
+        .replace(/Natureza Curativa/g, '\nNatureza Curativa')
+        .replace(/Qualidades Espirituais/g, '\nQualidades Espirituais')
+        .replace(/Saúde Mental\/Emocional/g, '\nSaúde Mental/Emocional')
+        .replace(/Dosagem Oral/g, '\nDosagem Oral');
+      
+      const wrapped = pdf.splitTextToSize(formattedDesc, maxW);
       const blockH = Math.max(thumb, (2 + wrapped.length) * lineH);
 
       if (y + blockH > pageH - margin) {
