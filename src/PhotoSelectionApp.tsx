@@ -18,11 +18,14 @@ export default function PhotoSelectionApp() {
   const [photos, setPhotos] = useState([]);            // { id, file, url, status }
   const [currentIdx, setCurrentIdx] = useState(0);
   const [chosen, setChosen] = useState([]);            // ids das 7
-  const [grid, setGrid]   = useState(Array(12).fill(null)); // 12 slots
+  const [photoPositions, setPhotoPositions] = useState({}); // { id: { x, y } }
   const [descriptions, setDescriptions] = useState({}); // { id: texto }
   const [exporting, setExporting] = useState(false);
   const [previewPhoto, setPreviewPhoto] = useState(null); // para modal de preview
+  const [draggedPhoto, setDraggedPhoto] = useState(null); // foto sendo arrastada
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 }); // offset do mouse
   const fileInputRef = useRef();
+  const arrangeAreaRef = useRef();
 
   /*************** helpers ***************/
   const shuffle = (arr) => arr.sort(() => Math.random() - 0.5);
@@ -82,23 +85,83 @@ export default function PhotoSelectionApp() {
     );
   };
 
-  /*************** drag-and-drop ***************/
-  const onDragStart = (e, from) => e.dataTransfer.setData("from", from);
-  const onDrop = (e, to) => {
-    const from = parseInt(e.dataTransfer.getData("from"));
-    if (Number.isNaN(from) || from === to) return;
-    setGrid((prev) => {
-      const clone = [...prev];
-      [clone[from], clone[to]] = [clone[to], clone[from]];
-      return clone;
+  /*************** free drag-and-drop ***************/
+  const handleMouseDown = (e, photoId) => {
+    e.preventDefault();
+    const rect = arrangeAreaRef.current.getBoundingClientRect();
+    const photoElement = e.currentTarget;
+    const photoRect = photoElement.getBoundingClientRect();
+    
+    setDraggedPhoto(photoId);
+    setDragOffset({
+      x: e.clientX - photoRect.left,
+      y: e.clientY - photoRect.top
     });
   };
 
+  const handleMouseMove = (e) => {
+    if (!draggedPhoto || !arrangeAreaRef.current) return;
+    
+    const rect = arrangeAreaRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left - dragOffset.x;
+    const y = e.clientY - rect.top - dragOffset.y;
+    
+    // Limitar dentro da área
+    const maxX = rect.width - 200; // largura da foto
+    const maxY = rect.height - 150; // altura da foto
+    
+    setPhotoPositions(prev => ({
+      ...prev,
+      [draggedPhoto]: {
+        x: Math.max(0, Math.min(x, maxX)),
+        y: Math.max(0, Math.min(y, maxY))
+      }
+    }));
+  };
+
+  const handleMouseUp = () => {
+    setDraggedPhoto(null);
+    setDragOffset({ x: 0, y: 0 });
+  };
+
+  // Event listeners para mouse
+  useEffect(() => {
+    if (draggedPhoto) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [draggedPhoto, dragOffset]);
+
+  // Inicializar posições das fotos quando entrar na etapa 3
+  useEffect(() => {
+    if (step === 3 && chosen.length > 0) {
+      setPhotoPositions(prev => {
+        const newPositions = { ...prev };
+        chosen.forEach((id, index) => {
+          if (!newPositions[id]) {
+            // Distribuir em grid inicial
+            const cols = 3;
+            const row = Math.floor(index / cols);
+            const col = index % cols;
+            newPositions[id] = {
+              x: col * 220 + 50,
+              y: row * 170 + 50
+            };
+          }
+        });
+        return newPositions;
+      });
+    }
+  }, [step, chosen]);
+
   /*************** relatório ***************/
-  const finalList = useMemo(() => 
-    grid.filter(Boolean).map(getPhoto), 
-    [grid, photos]
-  );
+  const finalList = useMemo(() => {
+    return chosen.map(getPhoto).filter(Boolean);
+  }, [chosen, photos]);
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 flex flex-col items-center">
@@ -125,8 +188,6 @@ export default function PhotoSelectionApp() {
           chosen={chosen}
           toggleChosen={toggleChosen}
           proceed={() => {
-            const base = [...chosen, ...Array(20 - chosen.length).fill(null)];
-            setGrid(base);
             setStep(3);
           }}
           previewPhoto={previewPhoto}
@@ -136,10 +197,12 @@ export default function PhotoSelectionApp() {
 
       {step === 3 && (
         <ArrangeStep
-          grid={grid}
+          chosen={chosen}
+          photoPositions={photoPositions}
           getPhoto={getPhoto}
-          onDragStart={onDragStart}
-          onDrop={onDrop}
+          handleMouseDown={handleMouseDown}
+          draggedPhoto={draggedPhoto}
+          arrangeAreaRef={arrangeAreaRef}
           finish={() => setStep(4)}
         />
       )}
@@ -332,40 +395,91 @@ function SelectionStep({ photos, chosen, toggleChosen, proceed, previewPhoto, se
   );
 }
 
-function ArrangeStep({ grid, getPhoto, onDragStart, onDrop, finish }) {
+function ArrangeStep({ chosen, photoPositions, getPhoto, handleMouseDown, draggedPhoto, arrangeAreaRef, finish }) {
   return (
     <div className="w-full max-w-6xl mx-auto text-center">
       <h2 className="text-xl font-semibold mb-4">
-        3. Organize as fotos selecionadas (arraste para reordenar)
+        3. Organize as fotos selecionadas livremente (arraste para posicionar)
       </h2>
-      <div className="grid grid-cols-4 gap-4 mb-6">
-        {grid.map((id, idx) => (
-          <div
-            key={idx}
-            draggable={Boolean(id)}
-            onDragStart={(e) => id && onDragStart(e, idx)}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => onDrop(e, idx)}
-            className="aspect-[4/3] w-full h-64 rounded-lg flex items-center justify-center overflow-hidden bg-gray-100 hover:bg-gray-200 transition-colors"
-          >
-            {id ? (
-              <img
-                src={getPhoto(id)?.url}
-                alt="slot"
-                className="max-h-full max-w-full object-contain"
-              />
-            ) : (
-              null
-            )}
-          </div>
-        ))}
-      </div>
-      <button
-        onClick={finish}
-        className="px-6 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
+      
+      <div 
+        ref={arrangeAreaRef}
+        className="relative w-full h-[600px] bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg mb-6 overflow-hidden"
+        style={{ userSelect: 'none' }}
       >
-        Gerar Relatório
-      </button>
+        <div className="absolute top-4 left-4 text-sm text-gray-500 pointer-events-none">
+          Arraste as fotos para organizá-las livremente
+        </div>
+        
+        {chosen.map((id) => {
+          const photo = getPhoto(id);
+          const position = photoPositions[id] || { x: 0, y: 0 };
+          const isDragging = draggedPhoto === id;
+          
+          return (
+            <div
+              key={id}
+              onMouseDown={(e) => handleMouseDown(e, id)}
+              className={`absolute w-48 h-36 rounded-lg overflow-hidden shadow-lg cursor-move transition-transform hover:scale-105 ${
+                isDragging ? 'z-50 scale-110 shadow-2xl' : 'z-10'
+              }`}
+              style={{
+                left: position.x,
+                top: position.y,
+                transform: isDragging ? 'rotate(5deg)' : 'rotate(0deg)'
+              }}
+            >
+              {photo && (
+                <>
+                  <img
+                    src={photo.url}
+                    alt="arranged"
+                    className="w-full h-full object-cover pointer-events-none"
+                    draggable={false}
+                  />
+                  <div className="absolute top-2 left-2 bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
+                    {chosen.indexOf(id) + 1}
+                  </div>
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white p-2 text-xs truncate">
+                    {photo.file?.name?.replace(/\.[^/.]+$/, "") || `Foto ${chosen.indexOf(id) + 1}`}
+                  </div>
+                </>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      
+      <div className="flex justify-center gap-4">
+        <button
+          onClick={() => {
+            // Reset para posições em grid
+            const newPositions = {};
+            chosen.forEach((id, index) => {
+              const cols = 3;
+              const row = Math.floor(index / cols);
+              const col = index % cols;
+              newPositions[id] = {
+                x: col * 220 + 50,
+                y: row * 170 + 50
+              };
+            });
+            // Atualizar posições via callback do pai
+            Object.entries(newPositions).forEach(([id, pos]) => {
+              photoPositions[id] = pos;
+            });
+          }}
+          className="px-4 py-2 rounded-xl bg-gray-500 text-white hover:bg-gray-600 transition-colors"
+        >
+          Resetar Posições
+        </button>
+        <button
+          onClick={finish}
+          className="px-6 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
+          >
+          Gerar Relatório
+        </button>
+      </div>
     </div>
   );
 }
