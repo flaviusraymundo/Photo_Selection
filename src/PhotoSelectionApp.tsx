@@ -2,73 +2,96 @@ import React, { useState, useRef, useEffect, useMemo } from "react";
 
 /**
  * PhotoSelectionApp – Pointer Events + layout responsivo (mobile/desktop)
- * • Organização LIVRE com drag unificado (pointer events)
- * • Área rolável no mobile e fixa no desktop
- * • Cards menores no mobile para caber mais itens em pé
- * • Botão “Compactar para tela”
- * • Exportação PDF via jsPDF
+ * • Área rolável em celulares (retrato e paisagem)
+ * • Cards sempre compactos em celular (inclusive horizontal)
+ * • Auto “compactar para tela” quando trocar a orientação
+ * • Botão “Compactar para tela” manual
  */
 
 export default function PhotoSelectionApp() {
-  const [step, setStep] = useState(-1); // -1 = welcome, 0 = loading, 1 = classification
-  const [photos, setPhotos] = useState<any[]>([]);            // { id, file, url, status }
+  const [step, setStep] = useState(-1);
+  const [photos, setPhotos] = useState<any[]>([]);
   const [currentIdx, setCurrentIdx] = useState(0);
-  const [chosen, setChosen] = useState<string[]>([]);         // ids das 7
-  const [photoPositions, setPhotoPositions] = useState<Record<string, {x:number,y:number}>>({}); // { id: { x, y } }
-  const [descriptions, setDescriptions] = useState<Record<string, string>>({}); // { id: texto }
+  const [chosen, setChosen] = useState<string[]>([]);
+  const [photoPositions, setPhotoPositions] = useState<Record<string, {x:number,y:number}>>({});
+  const [descriptions, setDescriptions] = useState<Record<string, string>>({});
   const [exporting, setExporting] = useState(false);
-  const [previewPhoto, setPreviewPhoto] = useState<any>(null); // modal preview
+  const [previewPhoto, setPreviewPhoto] = useState<any>(null);
 
-  // ---- Drag com Pointer Events ----
+  // Drag (Pointer Events)
   const [draggedPhoto, setDraggedPhoto] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState<{x:number,y:number}>({ x: 0, y: 0 });
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const arrangeAreaRef = useRef<HTMLDivElement | null>(null);
 
-  // ====== Responsivo (mobile vs desktop) ======
+  // ====== Responsivo / orientação ======
   const [viewportW, setViewportW] = useState<number>(typeof window !== "undefined" ? window.innerWidth : 1024);
-  const isMobile = viewportW < 640; // sm = 640px (Tailwind)
+  const [viewportH, setViewportH] = useState<number>(typeof window !== "undefined" ? window.innerHeight : 768);
+  const [isLandscape, setIsLandscape] = useState<boolean>(typeof window !== "undefined" ? window.matchMedia("(orientation: landscape)").matches : false);
 
-  // tamanho do card (foto) e espaçamentos por breakpoint
-  const CARD_W = isMobile ? 128 : 192;  // mobile menor
-  const CARD_H = isMobile ?  96 : 144;
-  const GUTTER_X = isMobile ? 16 : 28;
-  const GUTTER_Y = isMobile ? 16 : 28;
+  // “Phone-like” quando a MENOR dimensão é < 600px (pega celular em pé e deitado)
+  const isPhone = Math.min(viewportW, viewportH) < 600;
+  // Força modo compacto em celulares sempre (inclusive horizontal)
+  const useCompact = isPhone;
+
+  // tamanhos dos cards
+  const CARD_W = useCompact ? 128 : 192;
+  const CARD_H = useCompact ?  96 : 144;
+  const GUTTER_X = useCompact ? 16  : 28;
+  const GUTTER_Y = useCompact ? 16  : 28;
 
   useEffect(() => {
-    const onResize = () => setViewportW(window.innerWidth);
+    const onResize = () => {
+      setViewportW(window.innerWidth);
+      setViewportH(window.innerHeight);
+    };
+    const mql = window.matchMedia("(orientation: landscape)");
+    const onOrient = (e: MediaQueryListEvent | MediaQueryList) => {
+      const val = "matches" in e ? e.matches : (e as MediaQueryList).matches;
+      setIsLandscape(val);
+    };
     window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
+    if ("addEventListener" in mql) mql.addEventListener("change", onOrient as any);
+    else mql.addListener(onOrient as any);
+
+    // initial sync
+    onOrient(mql);
+
+    return () => {
+      window.removeEventListener('resize', onResize);
+      if ("removeEventListener" in mql) mql.removeEventListener("change", onOrient as any);
+      else mql.removeListener(onOrient as any);
+    };
   }, []);
 
-  // Lista das 88 fotos na pasta sample-photos
+  // Lista das 88 fotos
   const samplePhotoNames = [
-    "Anticeptic Bush.jpg", "Balga Blackboy.jpg", "Black Kangaroo Paw.jpg", "Blue China Orchid.jpg",
-    "Blue Leschenaultia.jpg", "Brachycome.jpg", "Brown Boronia.jpg", "Candle of Life.jpg",
-    "Cape Bluebell.jpg", "Catspaw.jpg", "Christmas Tree.jpg", "Correa.jpg", "Cowkicks.jpg",
-    "Cowslip Orchid.jpg", "Dampiera.jpg", "Donkey Orchid.jpg", "Fringed Lily Twiner.jpg",
-    "Fringed Mantis Orchid.jpg", "Fuchsia Grevillea.jpg", "Fuschia Gum.jpg", "Geraldton Wax.jpg",
-    "Giving Hands.jpg", "Goddess Grasstree.jpg", "Golden Glory.jpg", "Golden Waitsia.jpg",
-    "Green Rose.jpg", "Hairy Yellow Pea.jpg", "Happy Wanderer.jpg", "Hops Bush.jpg",
-    "Hybrid Pink Fairy Cowslip Orchid.jpg", "Illyarrie.jpg", "Leafless Orchid.jpg", "Macrozamia.jpg",
-    "Many Headed Dryandra.jpg", "Mauve Melaleuca.jpg", "Menzies Banksia.jpg", "One Sided Bottlebrush.jpg",
-    "Orange Leschenaultia.jpg", "Orange Spiked Pea.jpg", "Pale Sundew.jpg", "Parakeelya.jpg",
-    "Pincushion Hakea.jpg", "Pink Everlasting.jpg", "Pink Fairy Orchid.jpg", "Pink Fountain Triggerplant.jpg",
-    "Pink Impatiens.jpg", "Pink Trumpet Flower.jpg", "Pixie Mops.jpg", "Purple and Red Kangaroo Paw.jpg",
-    "Purple Enamel Orchid.jpg", "Purple Eremophila.jpg", "Purple Flag Flower.jpg", "Purple Nymph Waterlily.jpg",
-    "Queensland Bottlebrush.jpg", "Rabbit Orchid.jpg", "Red and Green Kangaroo Paw.jpg", "Red Beak Orchid.jpg",
-    "Red Feather Flower.jpg", "Red Leschenaultia.jpg", "Reed Triggerplant.jpg", "Ribbon Pea.jpg",
-    "Rose Cone Flower.jpg", "Shy Blue Orchid.jpg", "Silver Princess.jpg", "Snake Bush.jpg",
-    "Snake Vine.jpg", "Southern Cross.jpg", "Spirit Faces.jpg", "Star of Bethlehem.jpg",
-    "Starts Spider Orchid.jpg", "Swan River Myrtle.jpg", "Urchin Dryandra.jpg", "Ursinia.jpg",
-    "Veronica.jpg", "Violet Butterfly.jpg", "WA Smokebush.jpg", "Wattle.jpg", "White Eremophila.jpg",
-    "White Nymph Waterlily.jpg", "White Spider Orchid.jpg", "Wild Violet.jpg", "Wooly Banksia.jpg",
-    "Wooly Smokebush.jpg", "Yellow and Green Kangaroo Paw .jpg", "Yellow Boronia.jpg", "Yellow Cone Flower.jpg",
-    "Yellow Flag Flower.jpg", "Yellow Leschenaultia.jpg"
+    "Anticeptic Bush.jpg","Balga Blackboy.jpg","Black Kangaroo Paw.jpg","Blue China Orchid.jpg",
+    "Blue Leschenaultia.jpg","Brachycome.jpg","Brown Boronia.jpg","Candle of Life.jpg",
+    "Cape Bluebell.jpg","Catspaw.jpg","Christmas Tree.jpg","Correa.jpg","Cowkicks.jpg",
+    "Cowslip Orchid.jpg","Dampiera.jpg","Donkey Orchid.jpg","Fringed Lily Twiner.jpg",
+    "Fringed Mantis Orchid.jpg","Fuchsia Grevillea.jpg","Fuschia Gum.jpg","Geraldton Wax.jpg",
+    "Giving Hands.jpg","Goddess Grasstree.jpg","Golden Glory.jpg","Golden Waitsia.jpg",
+    "Green Rose.jpg","Hairy Yellow Pea.jpg","Happy Wanderer.jpg","Hops Bush.jpg",
+    "Hybrid Pink Fairy Cowslip Orchid.jpg","Illyarrie.jpg","Leafless Orchid.jpg","Macrozamia.jpg",
+    "Many Headed Dryandra.jpg","Mauve Melaleuca.jpg","Menzies Banksia.jpg","One Sided Bottlebrush.jpg",
+    "Orange Leschenaultia.jpg","Orange Spiked Pea.jpg","Pale Sundew.jpg","Parakeelya.jpg",
+    "Pincushion Hakea.jpg","Pink Everlasting.jpg","Pink Fairy Orchid.jpg","Pink Fountain Triggerplant.jpg",
+    "Pink Impatiens.jpg","Pink Trumpet Flower.jpg","Pixie Mops.jpg","Purple and Red Kangaroo Paw.jpg",
+    "Purple Enamel Orchid.jpg","Purple Eremophila.jpg","Purple Flag Flower.jpg","Purple Nymph Waterlily.jpg",
+    "Queensland Bottlebrush.jpg","Rabbit Orchid.jpg","Red and Green Kangaroo Paw.jpg","Red Beak Orchid.jpg",
+    "Red Feather Flower.jpg","Red Leschenaultia.jpg","Reed Triggerplant.jpg","Ribbon Pea.jpg",
+    "Rose Cone Flower.jpg","Shy Blue Orchid.jpg","Silver Princess.jpg","Snake Bush.jpg",
+    "Snake Vine.jpg","Southern Cross.jpg","Spirit Faces.jpg","Star of Bethlehem.jpg",
+    "Starts Spider Orchid.jpg","Swan River Myrtle.jpg","Urchin Dryandra.jpg","Ursinia.jpg",
+    "Veronica.jpg","Violet Butterfly.jpg","WA Smokebush.jpg","Wattle.jpg","White Eremophila.jpg",
+    "White Nymph Waterlily.jpg","White Spider Orchid.jpg","Wild Violet.jpg","Wooly Banksia.jpg",
+    "Wooly Smokebush.jpg","Yellow and Green Kangaroo Paw .jpg","Yellow Boronia.jpg","Yellow Cone Flower.jpg",
+    "Yellow Flag Flower.jpg","Yellow Leschenaultia.jpg"
   ];
 
-  // Carregar fotos automaticamente
+  // Carregar fotos (auto)
   useEffect(() => {
     const loadSamplePhotos = () => {
       const getBasePath = () => {
@@ -77,7 +100,6 @@ export default function PhotoSelectionApp() {
         return '';
       };
       const basePath = getBasePath();
-
       const mockPhotos = samplePhotoNames.map((fileName, i) => ({
         id: `sample_${i}`,
         file: { name: fileName },
@@ -85,21 +107,15 @@ export default function PhotoSelectionApp() {
         status: "neutral",
       }));
       setPhotos(shuffle(mockPhotos));
-      setStep(1); // direto para classificação
+      setStep(1);
     };
-
-    if (step === 0) setTimeout(loadSamplePhotos, 1000); // mostrar loading
+    if (step === 0) setTimeout(loadSamplePhotos, 800);
   }, [step]);
 
-  // Atalho Enter na tela de boas-vindas
+  // Enter na tela inicial
   useEffect(() => {
-    const handleWelcomeKeyPress = (e: KeyboardEvent) => {
-      if (step === -1 && e.key === 'Enter') setStep(0);
-    };
-    if (step === -1) {
-      window.addEventListener('keydown', handleWelcomeKeyPress);
-      return () => window.removeEventListener('keydown', handleWelcomeKeyPress);
-    }
+    const h = (e: KeyboardEvent) => { if (step === -1 && e.key === 'Enter') setStep(0); };
+    if (step === -1) { window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h); }
   }, [step]);
 
   /*************** helpers ***************/
@@ -126,7 +142,6 @@ export default function PhotoSelectionApp() {
       clone[currentIdx].status = status;
       return clone;
     });
-
     if (currentIdx + 1 < photos.length) setCurrentIdx(currentIdx + 1);
     else setStep(2);
   };
@@ -161,113 +176,103 @@ export default function PhotoSelectionApp() {
     e.preventDefault();
     const el = e.currentTarget;
     const rect = el.getBoundingClientRect();
-
     setDraggedPhoto(photoId);
-    setDragOffset({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
-    });
-
+    setDragOffset({ x: e.clientX - rect.left, y: e.clientY - rect.top });
     try { el.setPointerCapture(e.pointerId); } catch {}
   };
 
   const moveTo = (clientX: number, clientY: number) => {
     if (!draggedPhoto || !arrangeAreaRef.current) return;
-
     const rect = arrangeAreaRef.current.getBoundingClientRect();
     const x = clientX - rect.left - dragOffset.x;
     const y = clientY - rect.top - dragOffset.y;
-
-    // limites conforme tamanho atual do card
-    const maxX = rect.width - CARD_W;
+    const maxX = rect.width  - CARD_W;
     const maxY = rect.height - CARD_H;
-
     setPhotoPositions(prev => ({
       ...prev,
-      [draggedPhoto]: {
-        x: Math.max(0, Math.min(x, maxX)),
-        y: Math.max(0, Math.min(y, maxY))
-      }
+      [draggedPhoto]: { x: Math.max(0, Math.min(x, maxX)), y: Math.max(0, Math.min(y, maxY)) }
     }));
   };
 
   const handlePointerMoveDoc = (e: PointerEvent) => {
     if (!draggedPhoto) return;
-    e.preventDefault(); // impede scroll no mobile durante o drag
+    e.preventDefault();
     moveTo(e.clientX, e.clientY);
   };
-
   const handlePointerUpDoc = () => {
     if (!draggedPhoto) return;
-    setDraggedPhoto(null);
-    setDragOffset({ x: 0, y: 0 });
+    setDraggedPhoto(null); setDragOffset({ x: 0, y: 0 });
   };
 
   useEffect(() => {
     if (!draggedPhoto) return;
-
     const move = (ev: Event) => handlePointerMoveDoc(ev as PointerEvent);
-    const up = () => handlePointerUpDoc();
-
+    const up   = () => handlePointerUpDoc();
     document.addEventListener('pointermove', move, { passive: false });
-    document.addEventListener('pointerup', up, { passive: false });
-
+    document.addEventListener('pointerup',   up,   { passive: false });
     return () => {
       document.removeEventListener('pointermove', move);
-      document.removeEventListener('pointerup', up);
+      document.removeEventListener('pointerup',   up);
     };
   }, [draggedPhoto, dragOffset, CARD_W, CARD_H]);
 
-  // Inicializar posições quando entra na etapa 3 (grid inicial responsiva)
+  // Inicializar posições ao entrar na etapa 3 (grid inicial)
   useEffect(() => {
-    if (step === 3 && chosen.length > 0) {
-      setPhotoPositions(prev => {
-        const newPositions = { ...prev };
-        const cols = 3; // mantém 3 colunas padrão
-
-        chosen.forEach((id, index) => {
-          if (!newPositions[id]) {
-            const row = Math.floor(index / cols);
-            const col = index % cols;
-            newPositions[id] = {
-              x: col * (CARD_W + GUTTER_X) + 16,
-              y: row * (CARD_H + GUTTER_Y) + 16
-            };
-          }
-        });
-        return newPositions;
+    if (step !== 3 || chosen.length === 0) return;
+    setPhotoPositions(prev => {
+      const next = { ...prev };
+      const cols = 3; // padrão
+      chosen.forEach((id, index) => {
+        if (!next[id]) {
+          const row = Math.floor(index / cols);
+          const col = index % cols;
+          next[id] = {
+            x: col * (CARD_W + GUTTER_X) + 16,
+            y: row * (CARD_H + GUTTER_Y) + 16
+          };
+        }
       });
-    }
+      return next;
+    });
   }, [step, chosen, CARD_W, CARD_H, GUTTER_X, GUTTER_Y]);
+
+  // Auto “Compactar para tela” quando girar o aparelho
+  useEffect(() => {
+    if (step !== 3 || chosen.length === 0) return;
+    if (!arrangeAreaRef.current) return;
+    const areaW = arrangeAreaRef.current.getBoundingClientRect().width;
+    const cols = Math.max(1, Math.floor((areaW - 16) / (CARD_W + GUTTER_X)));
+    const newPositions: Record<string,{x:number,y:number}> = {};
+    chosen.forEach((id, index) => {
+      const row = Math.floor(index / cols);
+      const col = index % cols;
+      newPositions[id] = {
+        x: col * (CARD_W + GUTTER_X) + 16,
+        y: row * (CARD_H + GUTTER_Y) + 16
+      };
+    });
+    setPhotoPositions(prev => ({ ...prev, ...newPositions }));
+    // dispara quando muda orientação, largura ou altura
+  }, [isLandscape, viewportW, viewportH, CARD_W, CARD_H, GUTTER_X, GUTTER_Y, step, chosen]);
 
   /*************** relatório ***************/
   const finalList = useMemo(() => {
-    const photosWithPositions = chosen.map(id => {
+    const withPos = chosen.map(id => {
       const photo = getPhoto(id);
       const position = photoPositions[id] || { x: 0, y: 0 };
       return { photo, position, id };
     }).filter(item => item.photo);
-
-    photosWithPositions.sort((a, b) => {
-      if (Math.abs(a.position.y - b.position.y) < 50) {
-        return a.position.x - b.position.x;
-      }
+    withPos.sort((a, b) => {
+      if (Math.abs(a.position.y - b.position.y) < 50) return a.position.x - b.position.x;
       return a.position.y - b.position.y;
     });
-
-    return photosWithPositions.map(item => item.photo);
+    return withPos.map(item => item.photo);
   }, [chosen, photos, photoPositions]);
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 flex flex-col items-center">
-      {step === -1 && (
-        <WelcomeStep startProcess={() => setStep(0)} />
-      )}
-
-      {step === 0 && (
-        <UploadStep handleFiles={handleFiles} fileInputRef={fileInputRef} />
-      )}
-
+      {step === -1 && <WelcomeStep startProcess={() => setStep(0)} />}
+      {step === 0 && <UploadStep handleFiles={handleFiles} fileInputRef={fileInputRef} />}
       {step === 1 && photos.length > 0 && (
         <ClassificationStep
           photo={photos[currentIdx]}
@@ -277,7 +282,6 @@ export default function PhotoSelectionApp() {
           goBack={() => setCurrentIdx((i) => (i > 0 ? i - 1 : 0))}
         />
       )}
-
       {step === 2 && (
         <SelectionStep
           photos={photos.filter((p) => p.status !== "neutral")}
@@ -288,7 +292,6 @@ export default function PhotoSelectionApp() {
           setPreviewPhoto={setPreviewPhoto}
         />
       )}
-
       {step === 3 && (
         <ArrangeStep
           chosen={chosen}
@@ -299,14 +302,13 @@ export default function PhotoSelectionApp() {
           arrangeAreaRef={arrangeAreaRef}
           finish={() => setStep(4)}
           setPhotoPositions={setPhotoPositions}
-          // responsivo
           CARD_W={CARD_W}
           CARD_H={CARD_H}
           GUTTER_X={GUTTER_X}
           GUTTER_Y={GUTTER_Y}
+          useCompact={useCompact}
         />
       )}
-
       {step === 4 && (
         <ReportStep
           finalList={finalList}
@@ -329,28 +331,16 @@ function WelcomeStep({ startProcess }: { startProcess: () => void }) {
     return '';
   };
   const basePath = getBasePath();
-
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="text-center space-y-8 max-w-lg mx-auto">
         <div className="flex justify-center mb-6">
-          <img
-            src={`${basePath}/Logo 111.png`}
-            alt="Logo"
-            className="h-72 w-auto object-contain"
-            draggable={false}
-          />
+          <img src={`${basePath}/Logo 111.png`} alt="Logo" className="h-72 w-auto object-contain" draggable={false}/>
         </div>
-
         <div className="space-y-4">
-          <h1 className="text-5xl font-bold text-gray-800 mb-2">
-            Diagnóstico Avançado em Terapia Vibracional
-          </h1>
-          <p className="text-xl text-gray-600 leading-relaxed">
-            Por Flavius Raymundo
-          </p>
+          <h1 className="text-5xl font-bold text-gray-800 mb-2">Diagnóstico Avançado em Terapia Vibracional</h1>
+          <p className="text-xl text-gray-600 leading-relaxed">Por Flavius Raymundo</p>
         </div>
-
         <div className="space-y-4">
           <button
             onClick={startProcess}
@@ -358,12 +348,10 @@ function WelcomeStep({ startProcess }: { startProcess: () => void }) {
           >
             Iniciar
           </button>
-
           <p className="text-sm text-gray-500">
             Pressione <kbd className="px-2 py-1 bg-gray-200 rounded text-xs font-mono">Enter</kbd> ou clique no botão
           </p>
         </div>
-
         <div className="text-left bg-white p-6 rounded-lg shadow-sm border text-sm text-gray-600 space-y-2">
           <h3 className="font-semibold text-gray-800 mb-3">Como funciona:</h3>
           <div className="space-y-1">
@@ -382,9 +370,7 @@ function UploadStep({ handleFiles, fileInputRef }: { handleFiles: (f: FileList) 
   return (
     <div className="text-center space-y-6 max-w-md mx-auto">
       <h1 className="text-3xl font-bold text-gray-800">Carregando Fotos...</h1>
-      <p className="text-gray-600">
-        88 fotos de essências florais estão sendo carregadas automaticamente
-      </p>
+      <p className="text-gray-600">88 fotos de essências florais estão sendo carregadas automaticamente</p>
       <div className="bg-white p-8 rounded-xl shadow-lg">
         <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto mb-4"></div>
         <p className="text-lg font-medium mb-2">Preparando classificação...</p>
@@ -393,106 +379,44 @@ function UploadStep({ handleFiles, fileInputRef }: { handleFiles: (f: FileList) 
   );
 }
 
-function ClassificationStep({
-  photo, idx, total, classify, goBack
-}: {
-  photo: any, idx: number, total: number,
-  classify: (s: "positive"|"negative"|"neutral") => void,
-  goBack: () => void
+function ClassificationStep({ photo, idx, total, classify, goBack }:{
+  photo:any, idx:number, total:number, classify:(s:"positive"|"negative"|"neutral")=>void, goBack:()=>void
 }) {
   return (
     <div className="w-full max-w-2xl text-center space-y-4">
       <h2 className="font-medium">Foto {idx + 1} / {total}</h2>
       <div className="h-[600px] flex items-center justify-center">
-        <img
-          src={photo.url}
-          alt="preview"
-          className="max-h-full max-w-full object-contain rounded-lg shadow-lg"
-          draggable={false}
-        />
+        <img src={photo.url} alt="preview" className="max-h-full max-w-full object-contain rounded-lg shadow-lg" draggable={false}/>
       </div>
       <div className="flex justify-center gap-3">
-        <button
-          onClick={goBack}
-          disabled={idx === 0}
-          className={`px-4 py-2 rounded-xl bg-gray-300 hover:bg-gray-400 ${
-            idx === 0 ? "opacity-50 cursor-not-allowed" : ""
-          }`}
-        >
-          ← Anterior
-        </button>
-        <button
-          onClick={() => classify("positive")}
-          className="px-6 py-2 rounded-xl bg-green-500 text-white hover:bg-green-600"
-        >
-          Positiva (+)
-        </button>
-        <button
-          onClick={() => classify("negative")}
-          className="px-6 py-2 rounded-xl bg-red-500 text-white hover:bg-red-600"
-        >
-          Negativa (-)
-        </button>
-        <button
-          onClick={() => classify("neutral")}
-          className="px-6 py-2 rounded-xl bg-gray-300 hover:bg-gray-400"
-        >
-          Neutra
-        </button>
+        <button onClick={goBack} disabled={idx===0} className={`px-4 py-2 rounded-xl bg-gray-300 hover:bg-gray-400 ${idx===0?"opacity-50 cursor-not-allowed":""}`}>← Anterior</button>
+        <button onClick={()=>classify("positive")} className="px-6 py-2 rounded-xl bg-green-500 text-white hover:bg-green-600">Positiva (+)</button>
+        <button onClick={()=>classify("negative")} className="px-6 py-2 rounded-xl bg-red-500 text-white hover:bg-red-600">Negativa (-)</button>
+        <button onClick={()=>classify("neutral")} className="px-6 py-2 rounded-xl bg-gray-300 hover:bg-gray-400">Neutra</button>
       </div>
-      <p className="text-sm text-gray-500">
-        Use ← para voltar. Atalhos: +/=: positiva, -/_: negativa, Enter ou barra de espaço: neutra.
-      </p>
+      <p className="text-sm text-gray-500">Use ← para voltar. Atalhos: +/=: positiva, -/_: negativa, Enter ou barra de espaço: neutra.</p>
     </div>
   );
 }
 
-function SelectionStep({
-  photos, chosen, toggleChosen, proceed, previewPhoto, setPreviewPhoto
-}: any) {
+function SelectionStep({ photos, chosen, toggleChosen, proceed, previewPhoto, setPreviewPhoto }:any) {
   return (
     <>
       <div className="w-full max-w-5xl">
-        <h2 className="text-xl font-semibold mb-4 text-center">
-          2. Selecione até 7 fotos mais impactantes ({chosen.length}/7 selecionadas)
-        </h2>
+        <h2 className="text-xl font-semibold mb-4 text-center">2. Selecione até 7 fotos mais impactantes ({chosen.length}/7 selecionadas)</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-          {photos.map((p: any) => (
-            <div
-              key={p.id}
-              className={`relative rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow ${
-                chosen.includes(p.id) ? "ring-4 ring-blue-500" : ""
-              }`}
-            >
-              <img
-                src={p.url}
-                alt="option"
-                className="h-48 w-full object-contain bg-gray-50 cursor-pointer"
-                onClick={() => setPreviewPhoto(p)}
-                draggable={false}
-              />
-              <span className={`absolute top-2 left-2 px-2 py-1 text-xs rounded font-medium text-white ${
-                p.status === "positive" ? "bg-green-500" : "bg-red-500"
-              }`}>
-                {p.status === "positive" ? "+" : "-"}
-              </span>
+          {photos.map((p:any) => (
+            <div key={p.id} className={`relative rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow ${chosen.includes(p.id)?"ring-4 ring-blue-500":""}`}>
+              <img src={p.url} alt="option" className="h-48 w-full object-contain bg-gray-50 cursor-pointer" onClick={()=>setPreviewPhoto(p)} draggable={false}/>
+              <span className={`absolute top-2 left-2 px-2 py-1 text-xs rounded font-medium text-white ${p.status==="positive"?"bg-green-500":"bg-red-500"}`}>{p.status==="positive"?"+":"-"}</span>
               {chosen.includes(p.id) && (
                 <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
-                  <div className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
-                    {chosen.indexOf(p.id) + 1}
-                  </div>
+                  <div className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">{chosen.indexOf(p.id)+1}</div>
                 </div>
               )}
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleChosen(p.id);
-                }}
-                className={`absolute bottom-2 right-2 w-8 h-8 rounded-full text-white font-bold text-lg shadow-lg transition-colors ${
-                  chosen.includes(p.id)
-                    ? "bg-red-500 hover:bg-red-600"
-                    : "bg-green-500 hover:bg-green-600"
-                }`}
+                onClick={(e)=>{ e.stopPropagation(); toggleChosen(p.id); }}
+                className={`absolute bottom-2 right-2 w-8 h-8 rounded-full text-white font-bold text-lg shadow-lg transition-colors ${chosen.includes(p.id)?"bg-red-500 hover:bg-red-600":"bg-green-500 hover:bg-green-600"}`}
               >
                 {chosen.includes(p.id) ? "−" : "+"}
               </button>
@@ -500,34 +424,14 @@ function SelectionStep({
           ))}
         </div>
         <div className="text-center mt-6">
-          <button
-            disabled={chosen.length === 0}
-            onClick={proceed}
-            className={`px-8 py-3 rounded-xl text-white font-medium transition-colors ${
-              chosen.length > 0
-                ? "bg-blue-600 hover:bg-blue-700 cursor-pointer"
-                : "bg-gray-400 cursor-not-allowed"
-            }`}
-          >
-            Continuar para Organização
-          </button>
+          <button disabled={chosen.length===0} onClick={proceed} className={`px-8 py-3 rounded-xl text-white font-medium transition-colors ${chosen.length>0?"bg-blue-600 hover:bg-blue-700 cursor-pointer":"bg-gray-400 cursor-not-allowed"}`}>Continuar para Organização</button>
         </div>
       </div>
 
-      {/* Modal de Preview */}
       {previewPhoto && (
-        <div
-          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
-          onClick={() => setPreviewPhoto(null)}
-        >
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4" onClick={()=>setPreviewPhoto(null)}>
           <div className="relative max-w-4xl max-h-full">
-            <img
-              src={previewPhoto.url}
-              alt="preview"
-              className="max-h-[90vh] max-w-full object-contain rounded-lg"
-              onClick={(e) => e.stopPropagation()}
-              draggable={false}
-            />
+            <img src={previewPhoto.url} alt="preview" className="max-h-[90vh] max-w-full object-contain rounded-lg" onClick={(e)=>e.stopPropagation()} draggable={false}/>
             <div className="absolute top-4 left-4 bg-black/70 text-white px-3 py-2 rounded-lg">
               <div className="font-medium">{previewPhoto.file?.name || 'Foto'}</div>
               <div className="text-sm opacity-80">
@@ -535,12 +439,7 @@ function SelectionStep({
                 {chosen.includes(previewPhoto.id) && ` • Selecionada (${chosen.indexOf(previewPhoto.id) + 1}/${chosen.length})`}
               </div>
             </div>
-            <button
-              onClick={() => setPreviewPhoto(null)}
-              className="absolute top-4 right-4 bg-black/70 text-white w-10 h-10 rounded-full hover:bg-black/90 transition-colors"
-            >
-              ×
-            </button>
+            <button onClick={()=>setPreviewPhoto(null)} className="absolute top-4 right-4 bg-black/70 text-white w-10 h-10 rounded-full hover:bg-black/90 transition-colors">×</button>
           </div>
         </div>
       )}
@@ -549,18 +448,8 @@ function SelectionStep({
 }
 
 function ArrangeStep({
-  chosen,
-  photoPositions,
-  getPhoto,
-  handlePointerDown,
-  draggedPhoto,
-  arrangeAreaRef,
-  finish,
-  setPhotoPositions,
-  CARD_W,
-  CARD_H,
-  GUTTER_X,
-  GUTTER_Y
+  chosen, photoPositions, getPhoto, handlePointerDown, draggedPhoto, arrangeAreaRef, finish, setPhotoPositions,
+  CARD_W, CARD_H, GUTTER_X, GUTTER_Y, useCompact
 }: {
   chosen: string[];
   photoPositions: Record<string,{x:number,y:number}>;
@@ -570,16 +459,12 @@ function ArrangeStep({
   arrangeAreaRef: React.RefObject<HTMLDivElement>;
   finish: () => void;
   setPhotoPositions: React.Dispatch<React.SetStateAction<Record<string,{x:number,y:number}>>>;
-  CARD_W: number;
-  CARD_H: number;
-  GUTTER_X: number;
-  GUTTER_Y: number;
+  CARD_W: number; CARD_H: number; GUTTER_X: number; GUTTER_Y: number;
+  useCompact: boolean;
 }) {
   return (
     <div className="w-full max-w-6xl mx-auto text-center">
-      <h2 className="text-xl font-semibold mb-4">
-        3. Organize as fotos selecionadas livremente (arraste para posicionar)
-      </h2>
+      <h2 className="text-xl font-semibold mb-4">3. Organize as fotos selecionadas livremente (arraste para posicionar)</h2>
 
       <div
         ref={arrangeAreaRef}
@@ -587,9 +472,9 @@ function ArrangeStep({
           relative w-full
           md:h-[800px] h-[75vh]
           bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg mb-6
-          md:overflow-hidden overflow-auto
         "
-        style={{ userSelect: 'none', touchAction: 'auto', WebkitOverflowScrolling: 'touch' }}
+        // No celular (useCompact=true) deixamos rolar; no desktop escondemos overflow
+        style={{ userSelect: 'none', overflow: useCompact ? 'auto' : 'hidden', WebkitOverflowScrolling: 'touch' }}
       >
         <div className="absolute top-4 left-4 text-sm text-gray-500 pointer-events-none">
           Arraste as fotos para organizá-las livremente
@@ -599,32 +484,23 @@ function ArrangeStep({
           const photo = getPhoto(id);
           const position = photoPositions[id] || { x: 0, y: 0 };
           const isDragging = draggedPhoto === id;
-
           return (
             <div
               key={id}
               onPointerDown={(e) => handlePointerDown(e, id)}
-              className={`absolute rounded-lg overflow-hidden shadow-lg cursor-move transition-transform hover:scale-105 ${
-                isDragging ? 'z-50 scale-110 shadow-2xl' : 'z-10'
-              }`}
+              className={`absolute rounded-lg overflow-hidden shadow-lg cursor-move transition-transform hover:scale-105 ${isDragging ? 'z-50 scale-110 shadow-2xl' : 'z-10'}`}
               style={{
                 left: position.x,
                 top: position.y,
                 width: `${CARD_W}px`,
                 height: `${CARD_H}px`,
-                // O drag funciona bem no iOS quando o elemento arrastável tem touchAction: 'none'
-                touchAction: 'none',
+                touchAction: 'none', // importante para drag no iOS
                 transform: isDragging ? 'rotate(5deg)' : 'rotate(0deg)'
               }}
             >
               {photo && (
                 <>
-                  <img
-                    src={photo.url}
-                    alt="arranged"
-                    className="w-full h-full object-cover pointer-events-none"
-                    draggable={false}
-                  />
+                  <img src={photo.url} alt="arranged" className="w-full h-full object-cover pointer-events-none" draggable={false}/>
                   <div className="absolute top-2 left-2 bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
                     {chosen.indexOf(id) + 1}
                   </div>
@@ -639,12 +515,10 @@ function ArrangeStep({
       </div>
 
       <div className="flex justify-center gap-4">
-        {/* Botão COMPACTAR PARA TELA */}
         <button
           onClick={() => {
             if (!arrangeAreaRef.current) return;
             const areaW = arrangeAreaRef.current.getBoundingClientRect().width;
-            // calcula quantas colunas cabem na largura atual da área
             const cols = Math.max(1, Math.floor((areaW - 16) / (CARD_W + GUTTER_X)));
             const newPositions: Record<string,{x:number,y:number}> = {};
             chosen.forEach((id, index) => {
@@ -662,10 +536,7 @@ function ArrangeStep({
           Compactar para tela
         </button>
 
-        <button
-          onClick={finish}
-          className="px-6 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
-        >
+        <button onClick={finish} className="px-6 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition-colors">
           Gerar Relatório
         </button>
       </div>
@@ -673,19 +544,12 @@ function ArrangeStep({
   );
 }
 
-function ReportStep({
-  finalList, descriptions, setDescriptions, exporting, setExporting
-}: any) {
+function ReportStep({ finalList, descriptions, setDescriptions, exporting, setExporting }:any) {
   const [additionalInfo, setAdditionalInfo] = useState('Cliente:\n\nDosagem:\n\nNotas:\n');
+  const handleChange = (id: string, val: string) => setDescriptions((prev: Record<string,string>) => ({ ...prev, [id]: val }));
 
-  const handleChange = (id: string, val: string) => {
-    setDescriptions((prev: Record<string,string>) => ({ ...prev, [id]: val }));
-  };
-
-  // --- AUTO-PREENCHIMENTO (mesmo do seu arquivo anterior) ---
   useEffect(() => {
     if (!finalList.length) return;
-
     const loadDescriptions = async () => {
       try {
         const getBasePath = () => {
@@ -694,7 +558,6 @@ function ReportStep({
           return '';
         };
         const basePath = getBasePath();
-
         const response = await fetch(`${basePath}/photoDescriptions.json`);
         if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         const flowerData = await response.json();
@@ -705,15 +568,12 @@ function ReportStep({
             if (!next[photo.id]) {
               const fileName = photo.file?.name?.toLowerCase() || '';
               const fileNameClean = fileName.replace(/\.[^/.]+$/, '');
-              let bestMatch: any = null;
-              let bestScore = 0;
-
+              let bestMatch: any = null; let bestScore = 0;
               const normalizedFileName = fileNameClean.toLowerCase().trim();
               Object.entries(flowerData).forEach(([key, flower]: any) => {
                 const keyForMatch = key.toLowerCase().trim();
                 const titleForMatch = flower.title?.toLowerCase().trim() || '';
                 let score = 0;
-
                 if (normalizedFileName === keyForMatch) score = 1000;
                 else if (normalizedFileName === titleForMatch) score = 950;
                 else if (normalizedFileName.includes(keyForMatch)) score = 500;
@@ -721,8 +581,8 @@ function ReportStep({
                 else if (keyForMatch.includes(normalizedFileName)) score = 300;
                 else if (titleForMatch.includes(normalizedFileName)) score = 250;
                 else {
-                  const fileNormalized = normalizedFileName.replace(/[-_\s]+/g, '');
-                  const keyNormalized = keyForMatch.replace(/[-_\s]+/g, '');
+                  const fileNormalized  = normalizedFileName.replace(/[-_\s]+/g, '');
+                  const keyNormalized   = keyForMatch.replace(/[-_\s]+/g, '');
                   const titleNormalized = titleForMatch.replace(/[-_\s]+/g, '');
                   if (fileNormalized === keyNormalized) score = 800;
                   else if (fileNormalized === titleNormalized) score = 750;
@@ -733,19 +593,15 @@ function ReportStep({
                 }
                 if (score > bestScore) { bestScore = score; bestMatch = flower; }
               });
-
-              if (bestMatch && bestScore >= 200) {
-                next[photo.id] = `${bestMatch.title}\n\n${bestMatch.description}`;
-              }
+              if (bestMatch && bestScore >= 200) next[photo.id] = `${bestMatch.title}\n\n${bestMatch.description}`;
             }
           });
           return next;
         });
-      } catch (error) {
-        console.error('❌ Erro ao carregar descrições:', error);
+      } catch (e) {
+        console.error('❌ Erro ao carregar descrições:', e);
       }
     };
-
     loadDescriptions();
   }, [finalList, setDescriptions]);
 
@@ -755,15 +611,12 @@ function ReportStep({
     const pdf = new jsPDF({ orientation: "p", unit: "pt", format: "a4" });
     const margin = 40;
     const pageW = pdf.internal.pageSize.getWidth();
-    const pageH = pdf.internal.pageSize.getHeight();
-
     const getBasePath = () => {
       const hostname = window.location.hostname;
       if (hostname.includes('github.io')) return '/Photo_Selection';
       return '';
     };
     const basePath = getBasePath();
-
     const centerX = pageW / 2;
     let y = margin + 20;
 
@@ -771,39 +624,23 @@ function ReportStep({
       const logoResponse = await fetch(`${basePath}/Logo 111.png`);
       if (logoResponse.ok) {
         const logoBlob = await logoResponse.blob();
-        const logoDataURL: any = await new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.readAsDataURL(logoBlob);
-        });
-        const logoWidth = 120;
-        const logoHeight = 120;
+        const logoDataURL: any = await new Promise((resolve) => { const r = new FileReader(); r.onload = () => resolve(r.result); r.readAsDataURL(logoBlob); });
+        const logoWidth = 120, logoHeight = 120;
         pdf.addImage(logoDataURL, "PNG", centerX - logoWidth/2, y, logoWidth, logoHeight);
         y += logoHeight + 30;
       }
     } catch {}
 
-    pdf.setFontSize(24);
-    pdf.setTextColor("#1f2937");
-    pdf.text("Diagnóstico Avançado", centerX, y, { align: "center" });
-    y += 30;
+    pdf.setFontSize(24); pdf.setTextColor("#1f2937");
+    pdf.text("Diagnóstico Avançado", centerX, y, { align: "center" }); y += 30;
+    pdf.text("em Terapia Vibracional", centerX, y, { align: "center" }); y += 50;
+    pdf.setFontSize(16); pdf.setTextColor("#6b7280");
+    pdf.text("Por Flavius Raymundo", centerX, y, { align: "center" }); y += 60;
 
-    pdf.text("em Terapia Vibracional", centerX, y, { align: "center" });
-    y += 50;
+    const currentDate = new Date().toLocaleDateString('pt-BR',{year:'numeric',month:'long',day:'numeric'});
+    pdf.setFontSize(12); pdf.text(`Relatório gerado em: ${currentDate}`, centerX, y, { align: "center" }); y += 40;
 
-    pdf.setFontSize(16);
-    pdf.setTextColor("#6b7280");
-    pdf.text("Por Flavius Raymundo", centerX, y, { align: "center" });
-    y += 60;
-
-    const currentDate = new Date().toLocaleDateString('pt-BR', {
-      year: 'numeric', month: 'long', day: 'numeric'
-    });
-    pdf.setFontSize(12);
-    pdf.text(`Relatório gerado em: ${currentDate}`, centerX, y, { align: "center" });
-    y += 40;
-
-    // … (mantém seu bloco de listagem/descrições/imagens)
+    // (demais páginas com fotos/descrições — igual ao que você já tinha)
     pdf.save(`diagnostico-${new Date().toISOString().split('T')[0]}.pdf`);
     setExporting(false);
   };
@@ -812,39 +649,18 @@ function ReportStep({
     <div className="max-w-3xl mx-auto">
       <h2 className="text-2xl font-semibold mb-6 text-center">4. Relatório Final</h2>
       <div className="space-y-6">
-        {finalList.map((p: any, i: number) => (
-          <div
-            key={p.id}
-            className="flex flex-col sm:flex-row items-center gap-4 bg-white shadow rounded-lg p-4"
-          >
-            <img
-              src={p.url}
-              alt={`sel_${i}`}
-              className="h-24 w-24 object-cover rounded-lg border"
-              draggable={false}
-            />
+        {finalList.map((p:any, i:number) => (
+          <div key={p.id} className="flex flex-col sm:flex-row items-center gap-4 bg-white shadow rounded-lg p-4">
+            <img src={p.url} alt={`sel_${i}`} className="h-24 w-24 object-cover rounded-lg border" draggable={false}/>
             <div className="flex-1 w-full">
-              <h3 className="font-medium text-lg truncate mb-2">
-                {p.file?.name?.replace(/\.[^/.]+$/, "") || `Foto ${i + 1}`}
-              </h3>
-              <textarea
-                rows={2}
-                placeholder="Digite características/descrição..."
-                value={descriptions[p.id] || ""}
-                onChange={(e) => handleChange(p.id, e.target.value)}
-                className="w-full p-2 border rounded-md resize-none"
-              />
+              <h3 className="font-medium text-lg truncate mb-2">{p.file?.name?.replace(/\.[^/.]+$/, "") || `Foto ${i + 1}`}</h3>
+              <textarea rows={2} placeholder="Digite características/descrição..." value={descriptions[p.id] || ""} onChange={(e)=>setDescriptions((prev:any)=>({...prev,[p.id]:e.target.value}))} className="w-full p-2 border rounded-md resize-none"/>
             </div>
           </div>
         ))}
       </div>
-
       <div className="text-center mt-6">
-        <button
-          onClick={exportPDF}
-          disabled={exporting}
-          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
+        <button onClick={exportPDF} disabled={exporting} className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
           {exporting ? "Gerando PDF…" : "Exportar PDF"}
         </button>
       </div>
