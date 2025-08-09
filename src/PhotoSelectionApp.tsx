@@ -908,9 +908,28 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
         img.onload = () => {
           const canvas = document.createElement('canvas');
           const ctx = canvas.getContext('2d');
-          canvas.width = img.width;
-          canvas.height = img.height;
-          ctx.drawImage(img, 0, 0);
+          
+          // Definir tamanho fixo para o canvas (quadrado)
+          const size = 300; // Tamanho em pixels para melhor qualidade
+          canvas.width = size;
+          canvas.height = size;
+          
+          // Calcular dimensões para crop centralizado
+          const scale = Math.max(size / img.width, size / img.height);
+          const scaledWidth = img.width * scale;
+          const scaledHeight = img.height * scale;
+          
+          // Centralizar a imagem
+          const x = (size - scaledWidth) / 2;
+          const y = (size - scaledHeight) / 2;
+          
+          // Preencher fundo branco
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, size, size);
+          
+          // Desenhar imagem com crop centralizado
+          ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
+          
           resolve(canvas.toDataURL('image/jpeg'));
         };
         img.onerror = () => resolve(null);
