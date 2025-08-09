@@ -1,36 +1,74 @@
-# Photo Selection App
+# 📸 Photo Selection App
 
-Uma aplicação React para seleção e classificação de fotos com exportação em PDF.
+Uma aplicação **React + TypeScript** para **seleção, classificação e organização** de um conjunto fixo de 88 fotos já carregadas, com **exportação em PDF** e suporte total para **desktop e dispositivos móveis**.
 
-## Funcionalidades
+---
 
-- Upload de até 88 fotos
-- Classificação de fotos (Positiva/Negativa/Neutra)
-- Seleção das 7 fotos mais impactantes
-- Organização por drag & drop em grid de 12 slots
-- Exportação de relatório em PDF com descrições
+## ✨ Funcionalidades
+- **88 fotos carregadas automaticamente** no início
+- **Classificação** de fotos em:  
+  ✅ Positiva | ❌ Negativa | ⚪ Neutra
+- **Seleção automática** das **7 fotos mais impactantes**
+- **Organização livre (drag & drop)**:
+  - Totalmente funcional no **desktop e mobile** (suporte a toque)
+  - Área responsiva e rolável no celular
+  - Botão **"Compactar para tela"** para reorganizar fotos visíveis
+- **Debug de descrições** (modo teste rápido)
+- **Atalho na tela inicial** para escolher 7 fotos manualmente e ir direto ao drag & drop
+- **Exportação em PDF** com imagens e descrições completas
 
-## Como usar
+---
 
-1. Clone o repositório
-2. Instale as dependências: `npm install`
-3. Execute o projeto: `npm run dev`
+## 🖼 Fluxo de uso
+1. **Classificar** as fotos como positiva, negativa ou neutra
+2. **Selecionar** as 7 mais impactantes (automático ou manual via atalho)
+3. **Organizar** livremente no layout (drag & drop)
+4. **Exportar** relatório em PDF com imagens e descrições
 
-## Tecnologias
+---
 
-- React
-- TypeScript
-- Tailwind CSS
-- jsPDF
-- Vite
+## 🚀 Como usar (modo desenvolvedor)
+```bash
+# 1. Clone o repositório
+git clone https://github.com/seuusuario/Photo_Selection.git
 
-## Dependências
+# 2. Instale as dependências
+npm install
 
-```json
+# 3. Rode o projeto localmente
+npm run dev
+```
+
+---
+
+## 🛠 Tecnologias utilizadas
+- **React** (18+)
+- **TypeScript**
+- **Tailwind CSS**
+- **jsPDF**
+- **Vite**
+- **Lucide React** (ícones)
+
+---
+
+## 📦 Dependências principais
+\`\`\`json
 {
   "jspdf": "^3.0.1",
   "lucide-react": "^0.344.0",
   "react": "^18.3.1",
   "react-dom": "^18.3.1"
 }
-```
+\`\`\`
+
+---
+
+## 📱 Compatibilidade
+- **Desktop**: Chrome, Firefox, Safari, Edge
+- **Mobile**: iOS Safari, Android Chrome (drag & drop 100% funcional)
+
+---
+
+## 📝 Licença
+Este projeto é distribuído sob a licença MIT.  
+Sinta-se livre para usar, modificar e distribuir.
