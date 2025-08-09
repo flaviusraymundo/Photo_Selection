@@ -441,7 +441,7 @@ export default function PhotoSelectionApp() {
             className="px-3 py-1.5 rounded-md bg-blue-600 text-white hover:bg-blue-700"
             title="Escolha 7 fotos por nome e vá direto para a organização"
           >
-            Selecionar 7 por nome
+            O
           </button>
         )}
       </div>
