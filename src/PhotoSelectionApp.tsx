@@ -1055,11 +1055,7 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
     y = margin + 20;
 
     // Seção
-    pdf.setFontSize(16);
-    pdf.setTextColor("#1f2937");
-    pdf.text("Essências Selecionadas", centerX, y, { align: "center" });
-    y += 32;
-
+  
     const thumb = 72;
     const lineH = 14;
 
