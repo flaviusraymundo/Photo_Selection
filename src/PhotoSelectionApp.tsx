@@ -585,25 +585,97 @@ function UploadStep({ handleFiles, fileInputRef }: { handleFiles: (f: FileList) 
   );
 }
 
-function ClassificationStep({ photo, idx, total, classify, goBack }:{
-  photo:any, idx:number, total:number, classify:(s:"positive"|"negative"|"neutral")=>void, goBack:()=>void
+function ClassificationStep({
+  photo,
+  idx,
+  total,
+  classify,
+  goBack
+}: {
+  photo: any;
+  idx: number;
+  total: number;
+  classify: (s: "positive" | "negative" | "neutral") => void;
+  goBack: () => void;
 }) {
   return (
-    <div className="w-full max-w-2xl text-center space-y-4">
+    <div
+      className="w-full max-w-2xl mx-auto text-center space-y-4"
+      // Safe areas do iOS para não cortar botões nas bordas
+      style={{
+        paddingLeft: "max(12px, env(safe-area-inset-left))",
+        paddingRight: "max(12px, env(safe-area-inset-right))",
+      }}
+    >
       <h2 className="font-medium">Foto {idx + 1} / {total}</h2>
-      <div className="h-[600px] flex items-center justify-center">
-        <img src={photo.url} alt="preview" className="max-h-full max-w-full object-contain rounded-lg shadow-lg" draggable={false}/>
+
+      <div className="h-[60vh] sm:h-[600px] flex items-center justify-center">
+        <img
+          src={photo.url}
+          alt="preview"
+          className="max-h-full max-w-full object-contain rounded-lg shadow-lg"
+          draggable={false}
+        />
       </div>
-      <div className="flex justify-center gap-3">
-        <button onClick={goBack} disabled={idx===0} className={`px-4 py-2 rounded-xl bg-gray-300 hover:bg-gray-400 ${idx===0?"opacity-50 cursor-not-allowed":""}`}>← Anterior</button>
-        <button onClick={()=>classify("positive")} className="px-6 py-2 rounded-xl bg-green-500 text-white hover:bg-green-600">Positiva (+)</button>
-        <button onClick={()=>classify("negative")} className="px-6 py-2 rounded-xl bg-red-500 text-white hover:bg-red-600">Negativa (-)</button>
-        <button onClick={()=>classify("neutral")} className="px-6 py-2 rounded-xl bg-gray-300 hover:bg-gray-400">Neutra</button>
+
+      {/* Container dos botões com wrap no mobile */}
+      <div className="flex flex-wrap items-stretch justify-center gap-2 sm:gap-3 max-w-full">
+        <button
+          onClick={goBack}
+          disabled={idx === 0}
+          className={[
+            "rounded-xl bg-gray-300 hover:bg-gray-400",
+            "disabled:opacity-50 disabled:cursor-not-allowed",
+            // Mantém boa área de toque no mobile
+            "px-3 py-2 text-sm sm:px-4 sm:py-2 sm:text-base",
+            // Divide espaço e permite quebra de linha
+            "flex-1 basis-[140px] min-w-[120px] max-w-[210px]"
+          ].join(" ")}
+        >
+          ← Anterior
+        </button>
+
+        <button
+          onClick={() => classify("positive")}
+          className={[
+            "rounded-xl bg-green-500 text-white hover:bg-green-600",
+            "px-3 py-2 text-sm sm:px-6 sm:py-2 sm:text-base",
+            "flex-1 basis-[150px] min-w-[130px] max-w-[240px] font-medium"
+          ].join(" ")}
+        >
+          Positiva (+)
+        </button>
+
+        <button
+          onClick={() => classify("negative")}
+          className={[
+            "rounded-xl bg-red-500 text-white hover:bg-red-600",
+            "px-3 py-2 text-sm sm:px-6 sm:py-2 sm:text-base",
+            "flex-1 basis-[150px] min-w-[130px] max-w-[240px] font-medium"
+          ].join(" ")}
+        >
+          Negativa (-)
+        </button>
+
+        <button
+          onClick={() => classify("neutral")}
+          className={[
+            "rounded-xl bg-gray-300 hover:bg-gray-400",
+            "px-3 py-2 text-sm sm:px-6 sm:py-2 sm:text-base",
+            "flex-1 basis-[150px] min-w-[130px] max-w-[240px] font-medium"
+          ].join(" ")}
+        >
+          Neutra
+        </button>
       </div>
-      <p className="text-sm text-gray-500">Use ← para voltar. Atalhos: +/=: positiva, -/_: negativa, Enter ou barra de espaço: neutra.</p>
+
+      <p className="text-sm text-gray-500">
+        Use ← para voltar. Atalhos: +/=: positiva, -/_: negativa, Enter ou barra de espaço: neutra.
+      </p>
     </div>
   );
 }
+
 
 function SelectionStep({ photos, chosen, toggleChosen, proceed, previewPhoto, setPreviewPhoto }:any) {
   return (
