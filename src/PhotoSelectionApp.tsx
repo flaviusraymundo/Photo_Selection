@@ -199,6 +199,20 @@ export default function PhotoSelectionApp() {
     });
   };
 
+  // Touch events para mobile
+  const handleTouchStart = (e, photoId) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const rect = arrangeAreaRef.current.getBoundingClientRect();
+    const photoElement = e.currentTarget;
+    const photoRect = photoElement.getBoundingClientRect();
+    
+    setDraggedPhoto(photoId);
+    setDragOffset({
+      x: touch.clientX - photoRect.left,
+      y: touch.clientY - photoRect.top
+    });
+  };
   const handleMouseMove = (e) => {
     if (!draggedPhoto || !arrangeAreaRef.current) return;
     
@@ -219,19 +233,48 @@ export default function PhotoSelectionApp() {
     }));
   };
 
+  const handleTouchMove = (e) => {
+    if (!draggedPhoto || !arrangeAreaRef.current) return;
+    e.preventDefault(); // Previne scroll da página
+    
+    const touch = e.touches[0];
+    const rect = arrangeAreaRef.current.getBoundingClientRect();
+    const x = touch.clientX - rect.left - dragOffset.x;
+    const y = touch.clientY - rect.top - dragOffset.y;
+    
+    // Limitar dentro da área
+    const maxX = rect.width - 192;
+    const maxY = rect.height - 144;
+    
+    setPhotoPositions(prev => ({
+      ...prev,
+      [draggedPhoto]: {
+        x: Math.max(0, Math.min(x, maxX)),
+        y: Math.max(0, Math.min(y, maxY))
+      }
+    }));
+  };
   const handleMouseUp = () => {
     setDraggedPhoto(null);
     setDragOffset({ x: 0, y: 0 });
   };
 
+  const handleTouchEnd = () => {
+    setDraggedPhoto(null);
+    setDragOffset({ x: 0, y: 0 });
+  };
   // Event listeners para mouse
   useEffect(() => {
     if (draggedPhoto) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener('touchmove', handleTouchMove, { passive: false });
+      document.addEventListener('touchend', handleTouchEnd);
       return () => {
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
+        document.removeEventListener('touchmove', handleTouchMove);
+        document.removeEventListener('touchend', handleTouchEnd);
       };
     }
   }, [draggedPhoto, dragOffset]);
@@ -585,6 +628,7 @@ function ArrangeStep({ chosen, photoPositions, getPhoto, handleMouseDown, dragge
             <div
               key={id}
               onMouseDown={(e) => handleMouseDown(e, id)}
+              onTouchStart={(e) => handleTouchStart(e, id)}
               className={`absolute w-48 h-36 rounded-lg overflow-hidden shadow-lg cursor-move transition-transform hover:scale-105 ${
                 isDragging ? 'z-50 scale-110 shadow-2xl' : 'z-10'
               }`}
