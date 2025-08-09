@@ -61,7 +61,7 @@ export default function PhotoSelectionApp() {
   }, []);
 
   const samplePhotoNames = [
-    "Anticeptic Bush.jpg",
+    "Antiseptic Bush.jpg",
     "Balga Blackboy.jpg",
     "Black Kangaroo Paw.jpg",
     "Blue China Orchid.jpg",
@@ -80,7 +80,7 @@ export default function PhotoSelectionApp() {
     "Fringed Lily Twiner.jpg",
     "Fringed Mantis Orchid.jpg",
     "Fuchsia Grevillea.jpg",
-    "Fuschia Gum.jpg",
+    "Fuchsia Gum.jpg",
     "Geraldton Wax.jpg",
     "Giving Hands.jpg",
     "Goddess Grasstree.jpg",
