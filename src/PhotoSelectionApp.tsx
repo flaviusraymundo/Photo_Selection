@@ -188,7 +188,6 @@ export default function PhotoSelectionApp() {
   /*************** free drag-and-drop ***************/
   const handleMouseDown = (e, photoId) => {
     e.preventDefault();
-    const rect = arrangeAreaRef.current.getBoundingClientRect();
     const photoElement = e.currentTarget;
     const photoRect = photoElement.getBoundingClientRect();
     
@@ -203,7 +202,6 @@ export default function PhotoSelectionApp() {
   const handleTouchStart = (e, photoId) => {
     e.preventDefault();
     const touch = e.touches[0];
-    const rect = arrangeAreaRef.current.getBoundingClientRect();
     const photoElement = e.currentTarget;
     const photoRect = photoElement.getBoundingClientRect();
     
@@ -635,7 +633,8 @@ function ArrangeStep({ chosen, photoPositions, getPhoto, handleMouseDown, dragge
               style={{
                 left: position.x,
                 top: position.y,
-                transform: isDragging ? 'rotate(5deg)' : 'rotate(0deg)'
+               transform: isDragging ? 'rotate(5deg)' : 'rotate(0deg)',
+               touchAction: 'none' // Importante para touch events
               }}
             >
               {photo && (
@@ -1034,7 +1033,35 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
       y += blockH + 20;
     }
 
-    pdf.save("selecao.pdf");
+    // Detectar se é mobile para usar abordagem diferente
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      // No mobile, abrir o PDF em nova aba para permitir compartilhamento
+      const pdfBlob = pdf.output('blob');
+      const pdfUrl = URL.createObjectURL(pdfBlob);
+      
+      // Criar link temporário para download
+      const link = document.createElement('a');
+      link.href = pdfUrl;
+      link.download = `diagnostico-${new Date().toISOString().split('T')[0]}.pdf`;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      
+      // Tentar download direto primeiro
+      link.click();
+      
+      // Se não funcionar, abrir em nova aba
+      setTimeout(() => {
+        window.open(pdfUrl, '_blank');
+        document.body.removeChild(link);
+        URL.revokeObjectURL(pdfUrl);
+      }, 100);
+    } else {
+      // Desktop: download normal
+      pdf.save(`diagnostico-${new Date().toISOString().split('T')[0]}.pdf`);
+    }
+    
     setExporting(false);
   };
 
