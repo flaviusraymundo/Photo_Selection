@@ -601,7 +601,6 @@ function ClassificationStep({
   return (
     <div
       className="w-full max-w-2xl mx-auto text-center space-y-4"
-      // Safe areas do iOS para não cortar botões nas bordas
       style={{
         paddingLeft: "max(12px, env(safe-area-inset-left))",
         paddingRight: "max(12px, env(safe-area-inset-right))",
@@ -618,52 +617,38 @@ function ClassificationStep({
         />
       </div>
 
-      {/* Container dos botões com wrap no mobile */}
-      <div className="flex flex-wrap items-stretch justify-center gap-2 sm:gap-3 max-w-full">
+      {/* Primeira linha: Anterior + Positiva */}
+      <div className="flex justify-center gap-2 sm:gap-3">
         <button
           onClick={goBack}
           disabled={idx === 0}
-          className={[
-            "rounded-xl bg-gray-300 hover:bg-gray-400",
-            "disabled:opacity-50 disabled:cursor-not-allowed",
-            // Mantém boa área de toque no mobile
-            "px-3 py-2 text-sm sm:px-4 sm:py-2 sm:text-base",
-            // Divide espaço e permite quebra de linha
-            "flex-1 basis-[140px] min-w-[120px] max-w-[210px]"
-          ].join(" ")}
+          className="flex-1 min-w-[120px] max-w-[180px] px-3 py-2 rounded-xl bg-gray-300 hover:bg-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           ← Anterior
         </button>
-
         <button
           onClick={() => classify("positive")}
-          className={[
-            "rounded-xl bg-green-500 text-white hover:bg-green-600",
-            "px-3 py-2 text-sm sm:px-6 sm:py-2 sm:text-base",
-            "flex-1 basis-[150px] min-w-[130px] max-w-[240px] font-medium"
-          ].join(" ")}
+          className="flex-1 min-w-[130px] max-w-[200px] px-3 py-2 rounded-xl bg-green-500 text-white hover:bg-green-600 font-medium"
         >
           Positiva (+)
         </button>
+      </div>
 
+      {/* Segunda linha: Negativa */}
+      <div className="flex justify-center">
         <button
           onClick={() => classify("negative")}
-          className={[
-            "rounded-xl bg-red-500 text-white hover:bg-red-600",
-            "px-3 py-2 text-sm sm:px-6 sm:py-2 sm:text-base",
-            "flex-1 basis-[150px] min-w-[130px] max-w-[240px] font-medium"
-          ].join(" ")}
+          className="w-full max-w-[240px] px-3 py-2 rounded-xl bg-red-500 text-white hover:bg-red-600 font-medium"
         >
           Negativa (-)
         </button>
+      </div>
 
+      {/* Terceira linha: Neutra */}
+      <div className="flex justify-center">
         <button
           onClick={() => classify("neutral")}
-          className={[
-            "rounded-xl bg-gray-300 hover:bg-gray-400",
-            "px-3 py-2 text-sm sm:px-6 sm:py-2 sm:text-base",
-            "flex-1 basis-[150px] min-w-[130px] max-w-[240px] font-medium"
-          ].join(" ")}
+          className="w-full max-w-[240px] px-3 py-2 rounded-xl bg-gray-300 hover:bg-gray-400 font-medium"
         >
           Neutra
         </button>
@@ -675,6 +660,7 @@ function ClassificationStep({
     </div>
   );
 }
+
 
 
 function SelectionStep({ photos, chosen, toggleChosen, proceed, previewPhoto, setPreviewPhoto }:any) {
