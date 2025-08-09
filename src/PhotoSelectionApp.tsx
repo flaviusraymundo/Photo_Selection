@@ -647,7 +647,7 @@ function ArrangeStep({ chosen, photoPositions, getPhoto, handleMouseDown, dragge
 }
 
 function ReportStep({ finalList, descriptions, setDescriptions, exporting, setExporting }) {
-  const [additionalInfo, setAdditionalInfo] = useState('Paciente:\n\nDosagem:\n\nNotas:\n');
+  const [additionalInfo, setAdditionalInfo] = useState('Cliente:\n\nDosagem:\n\nNotas:\n');
   
   const handleChange = (id, val) => {
     setDescriptions((prev) => ({ ...prev, [id]: val }));
@@ -1032,7 +1032,7 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
           Informações Adicionais
         </h3>
         <p className="text-sm text-blue-700 mb-3">
-          Este campo será incluído no cabeçalho do PDF. Use para adicionar informações sobre o paciente, contexto da consulta, observações gerais, etc.
+          Este campo será incluído no cabeçalho do PDF. Use para adicionar informações sobre o cliente, contexto da consulta, observações gerais, etc.
         </p>
         <textarea
           rows={4}
