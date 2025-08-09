@@ -683,7 +683,7 @@ function ClassificationStep({
   idx,
   total,
   classify,
-  goBack,
+  goBack
 }: {
   photo: any;
   idx: number;
@@ -699,52 +699,61 @@ function ClassificationStep({
         paddingRight: "max(12px, env(safe-area-inset-right))",
       }}
     >
-      <h2 className="font-medium">
-        Foto {idx + 1} / {total}
-      </h2>
+      <h2 className="font-medium">Foto {idx + 1} / {total}</h2>
 
       <div className="h-[60vh] sm:h-[600px] flex items-center justify-center">
-        <img src={photo.url} alt="preview" className="max-h-full max-w-full object-contain rounded-lg shadow-lg" draggable={false} />
+        <img
+          src={photo.url}
+          alt="preview"
+          className="max-h-full max-w-full object-contain rounded-lg shadow-lg"
+          draggable={false}
+        />
       </div>
 
-      {/* Primeira linha: Anterior + Positiva */}
+      {/* Primeira linha: Negativa + Positiva */}
       <div className="flex justify-center gap-2 sm:gap-3">
         <button
-          onClick={goBack}
-          disabled={idx === 0}
-          className="flex-1 min-w-[120px] max-w-[180px] px-3 py-2 rounded-xl bg-gray-300 hover:bg-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={() => classify("negative")}
+          className="flex-1 min-w-[120px] max-w-[180px] px-3 py-2 rounded-xl bg-red-500 text-white hover:bg-red-600 font-medium"
         >
-          ← Anterior
+          Negativa (-)
         </button>
         <button
           onClick={() => classify("positive")}
-          className="flex-1 min-w-[130px] max-w-[200px] px-3 py-2 rounded-xl bg-green-500 text-white hover:bg-green-600 font-medium"
+          className="flex-1 min-w-[120px] max-w-[180px] px-3 py-2 rounded-xl bg-green-500 text-white hover:bg-green-600 font-medium"
         >
           Positiva (+)
         </button>
       </div>
 
-      {/* Segunda linha: Negativa */}
+      {/* Segunda linha: Neutra */}
       <div className="flex justify-center">
         <button
-          onClick={() => classify("negative")}
-          className="w-full max-w-[240px] px-3 py-2 rounded-xl bg-red-500 text-white hover:bg-red-600 font-medium"
+          onClick={() => classify("neutral")}
+          className="w-full max-w-[240px] px-3 py-2 rounded-xl bg-gray-300 hover:bg-gray-400 font-medium"
         >
-          Negativa (-)
-        </button>
-      </div>
-
-      {/* Terceira linha: Neutra */}
-      <div className="flex justify-center">
-        <button onClick={() => classify("neutral")} className="w-full max-w-[240px] px-3 py-2 rounded-xl bg-gray-300 hover:bg-gray-400 font-medium">
           Neutra
         </button>
       </div>
 
-      <p className="text-sm text-gray-500">Use ← para voltar. Atalhos: +/=: positiva, -/_: negativa, Enter ou barra de espaço: neutra.</p>
+      {/* Terceira linha: Voltar */}
+      <div className="flex justify-center">
+        <button
+          onClick={goBack}
+          disabled={idx === 0}
+          className="w-full max-w-[240px] px-3 py-2 rounded-xl bg-gray-300 hover:bg-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          ← Voltar
+        </button>
+      </div>
+
+      <p className="text-sm text-gray-500">
+        Atalhos: +/=: positiva, -/_: negativa, Enter ou barra de espaço: neutra.
+      </p>
     </div>
   );
 }
+
 
 function SelectionStep({ photos, chosen, toggleChosen, proceed, previewPhoto, setPreviewPhoto }: any) {
   return (
