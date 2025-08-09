@@ -1,3 +1,5 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+/* 👇 ajuda no iOS: evita “arrastar imagem nativo” e seleção */
+img { -webkit-user-drag: none; user-select: none; }
