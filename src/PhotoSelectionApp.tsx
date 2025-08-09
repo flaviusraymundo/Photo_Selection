@@ -380,7 +380,7 @@ function WelcomeStep({ startProcess }) {
             onClick={startProcess}
             className="px-12 py-4 bg-blue-600 text-white text-xl font-semibold rounded-xl hover:bg-blue-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
           >
-            Iniciar Processo
+            Iniciar
           </button>
           
           <p className="text-sm text-gray-500">
