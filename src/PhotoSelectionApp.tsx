@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 
 /**
- * PhotoSelectionApp – Pointer Events + layout responsivo (mobile/desktop)
+ * PhotoSelectionApp – Pointer Events + layout responsivo + debug + seleção por nome
  * • Área rolável em celulares (retrato e paisagem)
- * • Cards sempre compactos em celular (inclusive horizontal)
- * • Auto “compactar para tela” quando trocar a orientação
- * • Botão “Compactar para tela” manual
+ * • Cards compactos em celular (inclusive horizontal)
+ * • Botão “Compactar para tela”
+ * • Modo DEBUG (?debug=1 ou #debug): checa descrições ausentes/incompletas
+ * • Selecionar 7 por nome na tela inicial → pula direto para a organização livre
  */
 
 export default function PhotoSelectionApp() {
@@ -30,75 +31,69 @@ export default function PhotoSelectionApp() {
   const [viewportH, setViewportH] = useState<number>(typeof window !== "undefined" ? window.innerHeight : 768);
   const [isLandscape, setIsLandscape] = useState<boolean>(typeof window !== "undefined" ? window.matchMedia("(orientation: landscape)").matches : false);
 
-  // “Phone-like” quando a MENOR dimensão é < 600px (pega celular em pé e deitado)
   const isPhone = Math.min(viewportW, viewportH) < 600;
-  // Força modo compacto em celulares sempre (inclusive horizontal)
   const useCompact = isPhone;
 
-  // tamanhos dos cards
   const CARD_W = useCompact ? 128 : 192;
   const CARD_H = useCompact ?  96 : 144;
   const GUTTER_X = useCompact ? 16  : 28;
   const GUTTER_Y = useCompact ? 16  : 28;
 
   useEffect(() => {
-    const onResize = () => {
-      setViewportW(window.innerWidth);
-      setViewportH(window.innerHeight);
-    };
+    const onResize = () => { setViewportW(window.innerWidth); setViewportH(window.innerHeight); };
     const mql = window.matchMedia("(orientation: landscape)");
-    const onOrient = (e: MediaQueryListEvent | MediaQueryList) => {
-      const val = "matches" in e ? e.matches : (e as MediaQueryList).matches;
-      setIsLandscape(val);
-    };
+    const onOrient = (e: any) => setIsLandscape(e.matches ?? e.target.matches);
     window.addEventListener('resize', onResize);
-    if ("addEventListener" in mql) mql.addEventListener("change", onOrient as any);
-    else mql.addListener(onOrient as any);
-
-    // initial sync
+    if (mql.addEventListener) mql.addEventListener("change", onOrient);
+    else mql.addListener(onOrient);
     onOrient(mql);
-
     return () => {
       window.removeEventListener('resize', onResize);
-      if ("removeEventListener" in mql) mql.removeEventListener("change", onOrient as any);
-      else mql.removeListener(onOrient as any);
+      if (mql.removeEventListener) mql.removeEventListener("change", onOrient);
+      else mql.removeListener(onOrient);
     };
   }, []);
 
-  // Lista das 88 fotos
   const samplePhotoNames = [
-    "Antiseptic Bush.jpg","Balga Blackboy.jpg","Black Kangaroo Paw.jpg","Blue China Orchid.jpg",
-    "Blue Leschenaultia.jpg","Brachycome.jpg","Brown Boronia.jpg","Candle of Life.jpg",
-    "Cape Bluebell.jpg","Catspaw.jpg","Christmas Tree.jpg","Correa.jpg","Cowkicks.jpg",
-    "Cowslip Orchid.jpg","Dampiera.jpg","Donkey Orchid.jpg","Fringed Lily Twiner.jpg",
-    "Fringed Mantis Orchid.jpg","Fuchsia Grevillea.jpg","Fuschia Gum.jpg","Geraldton Wax.jpg",
-    "Giving Hands.jpg","Goddess Grasstree.jpg","Golden Glory.jpg","Golden Waitsia.jpg",
-    "Green Rose.jpg","Hairy Yellow Pea.jpg","Happy Wanderer.jpg","Hops Bush.jpg",
-    "Hybrid Pink Fairy Cowslip Orchid.jpg","Illyarrie.jpg","Leafless Orchid.jpg","Macrozamia.jpg",
-    "Many Headed Dryandra.jpg","Mauve Melaleuca.jpg","Menzies Banksia.jpg","One Sided Bottlebrush.jpg",
-    "Orange Leschenaultia.jpg","Orange Spiked Pea.jpg","Pale Sundew.jpg","Parakeelya.jpg",
-    "Pincushion Hakea.jpg","Pink Everlasting.jpg","Pink Fairy Orchid.jpg","Pink Fountain Triggerplant.jpg",
-    "Pink Impatiens.jpg","Pink Trumpet Flower.jpg","Pixie Mops.jpg","Purple and Red Kangaroo Paw.jpg",
-    "Purple Enamel Orchid.jpg","Purple Eremophila.jpg","Purple Flag Flower.jpg","Purple Nymph Waterlily.jpg",
-    "Queensland Bottlebrush.jpg","Rabbit Orchid.jpg","Red and Green Kangaroo Paw.jpg","Red Beak Orchid.jpg",
-    "Red Feather Flower.jpg","Red Leschenaultia.jpg","Reed Triggerplant.jpg","Ribbon Pea.jpg",
-    "Rose Cone Flower.jpg","Shy Blue Orchid.jpg","Silver Princess.jpg","Snake Bush.jpg",
-    "Snake Vine.jpg","Southern Cross.jpg","Spirit Faces.jpg","Star of Bethlehem.jpg",
-    "Starts Spider Orchid.jpg","Swan River Myrtle.jpg","Urchin Dryandra.jpg","Ursinia.jpg",
-    "Veronica.jpg","Violet Butterfly.jpg","WA Smokebush.jpg","Wattle.jpg","White Eremophila.jpg",
-    "White Nymph Waterlily.jpg","White Spider Orchid.jpg","Wild Violet.jpg","Wooly Banksia.jpg",
-    "Wooly Smokebush.jpg","Yellow and Green Kangaroo Paw .jpg","Yellow Boronia.jpg","Yellow Cone Flower.jpg",
-    "Yellow Flag Flower.jpg","Yellow Leschenaultia.jpg"
+    "Anticeptic Bush.jpg", "Balga Blackboy.jpg", "Black Kangaroo Paw.jpg", "Blue China Orchid.jpg",
+    "Blue Leschenaultia.jpg", "Brachycome.jpg", "Brown Boronia.jpg", "Candle of Life.jpg",
+    "Cape Bluebell.jpg", "Catspaw.jpg", "Christmas Tree.jpg", "Correa.jpg", "Cowkicks.jpg",
+    "Cowslip Orchid.jpg", "Dampiera.jpg", "Donkey Orchid.jpg", "Fringed Lily Twiner.jpg",
+    "Fringed Mantis Orchid.jpg", "Fuchsia Grevillea.jpg", "Fuschia Gum.jpg", "Geraldton Wax.jpg",
+    "Giving Hands.jpg", "Goddess Grasstree.jpg", "Golden Glory.jpg", "Golden Waitsia.jpg",
+    "Green Rose.jpg", "Hairy Yellow Pea.jpg", "Happy Wanderer.jpg", "Hops Bush.jpg",
+    "Hybrid Pink Fairy Cowslip Orchid.jpg", "Illyarrie.jpg", "Leafless Orchid.jpg", "Macrozamia.jpg",
+    "Many Headed Dryandra.jpg", "Mauve Melaleuca.jpg", "Menzies Banksia.jpg", "One Sided Bottlebrush.jpg",
+    "Orange Leschenaultia.jpg", "Orange Spiked Pea.jpg", "Pale Sundew.jpg", "Parakeelya.jpg",
+    "Pincushion Hakea.jpg", "Pink Everlasting.jpg", "Pink Fairy Orchid.jpg", "Pink Fountain Triggerplant.jpg",
+    "Pink Impatiens.jpg", "Pink Trumpet Flower.jpg", "Pixie Mops.jpg", "Purple and Red Kangaroo Paw.jpg",
+    "Purple Enamel Orchid.jpg", "Purple Eremophila.jpg", "Purple Flag Flower.jpg", "Purple Nymph Waterlily.jpg",
+    "Queensland Bottlebrush.jpg", "Rabbit Orchid.jpg", "Red and Green Kangaroo Paw.jpg", "Red Beak Orchid.jpg",
+    "Red Feather Flower.jpg", "Red Leschenaultia.jpg", "Reed Triggerplant.jpg", "Ribbon Pea.jpg",
+    "Rose Cone Flower.jpg", "Shy Blue Orchid.jpg", "Silver Princess.jpg", "Snake Bush.jpg",
+    "Snake Vine.jpg", "Southern Cross.jpg", "Spirit Faces.jpg", "Star of Bethlehem.jpg",
+    "Starts Spider Orchid.jpg", "Swan River Myrtle.jpg", "Urchin Dryandra.jpg", "Ursinia.jpg",
+    "Veronica.jpg", "Violet Butterfly.jpg", "WA Smokebush.jpg", "Wattle.jpg", "White Eremophila.jpg",
+    "White Nymph Waterlily.jpg", "White Spider Orchid.jpg", "Wild Violet.jpg", "Wooly Banksia.jpg",
+    "Wooly Smokebush.jpg", "Yellow and Green Kangaroo Paw .jpg", "Yellow Boronia.jpg", "Yellow Cone Flower.jpg",
+    "Yellow Flag Flower.jpg", "Yellow Leschenaultia.jpg"
   ];
 
-  // Carregar fotos (auto)
+  // ===== DEBUG =====
+  const debugMode = /[?&#]debug=1|#debug/i.test(typeof window !== "undefined" ? window.location.href : "");
+  const [debugOpen, setDebugOpen] = useState(false);
+  const [debugRows, setDebugRows] = useState<Array<{name: string, bestKey?: string, score: number}>>([]);
+
+  const getBasePath = () => {
+    const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+    if (hostname.includes('github.io')) return '/Photo_Selection';
+    return '';
+  };
+
+  // --------- fluxo normal: carregar amostras ao sair da welcome ---------
   useEffect(() => {
+    if (step !== 0) return;
     const loadSamplePhotos = () => {
-      const getBasePath = () => {
-        const hostname = window.location.hostname;
-        if (hostname.includes('github.io')) return '/Photo_Selection';
-        return '';
-      };
       const basePath = getBasePath();
       const mockPhotos = samplePhotoNames.map((fileName, i) => ({
         id: `sample_${i}`,
@@ -109,7 +104,7 @@ export default function PhotoSelectionApp() {
       setPhotos(shuffle(mockPhotos));
       setStep(1);
     };
-    if (step === 0) setTimeout(loadSamplePhotos, 800);
+    setTimeout(loadSamplePhotos, 800);
   }, [step]);
 
   // Enter na tela inicial
@@ -221,22 +216,19 @@ export default function PhotoSelectionApp() {
     if (step !== 3 || chosen.length === 0) return;
     setPhotoPositions(prev => {
       const next = { ...prev };
-      const cols = 3; // padrão
+      const cols = 3;
       chosen.forEach((id, index) => {
         if (!next[id]) {
           const row = Math.floor(index / cols);
           const col = index % cols;
-          next[id] = {
-            x: col * (CARD_W + GUTTER_X) + 16,
-            y: row * (CARD_H + GUTTER_Y) + 16
-          };
+          next[id] = { x: col * (CARD_W + GUTTER_X) + 16, y: row * (CARD_H + GUTTER_Y) + 16 };
         }
       });
       return next;
     });
   }, [step, chosen, CARD_W, CARD_H, GUTTER_X, GUTTER_Y]);
 
-  // Auto “Compactar para tela” quando girar o aparelho
+  // Auto “Compactar para tela” ao girar
   useEffect(() => {
     if (step !== 3 || chosen.length === 0) return;
     if (!arrangeAreaRef.current) return;
@@ -246,13 +238,9 @@ export default function PhotoSelectionApp() {
     chosen.forEach((id, index) => {
       const row = Math.floor(index / cols);
       const col = index % cols;
-      newPositions[id] = {
-        x: col * (CARD_W + GUTTER_X) + 16,
-        y: row * (CARD_H + GUTTER_Y) + 16
-      };
+      newPositions[id] = { x: col * (CARD_W + GUTTER_X) + 16, y: row * (CARD_H + GUTTER_Y) + 16 };
     });
     setPhotoPositions(prev => ({ ...prev, ...newPositions }));
-    // dispara quando muda orientação, largura ou altura
   }, [isLandscape, viewportW, viewportH, CARD_W, CARD_H, GUTTER_X, GUTTER_Y, step, chosen]);
 
   /*************** relatório ***************/
@@ -269,10 +257,126 @@ export default function PhotoSelectionApp() {
     return withPos.map(item => item.photo);
   }, [chosen, photos, photoPositions]);
 
+  // ====== DEBUG: verificação de descrições ======
+  const runDescriptionAudit = async (onlyChosen = false) => {
+    try {
+      const basePath = getBasePath();
+      const resp = await fetch(`${basePath}/photoDescriptions.json`);
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const flowerData = await resp.json();
+
+      const list = (onlyChosen ? chosen.map(id => getPhoto(id)?.file?.name) : samplePhotoNames)
+        .filter(Boolean) as string[];
+
+      const rows: Array<{name: string, bestKey?: string, score: number}> = list.map((fileName) => {
+        const fn = fileName.toLowerCase().replace(/\.[^/.]+$/, '').trim();
+        let bestScore = 0, bestKey: string | undefined;
+
+        Object.entries(flowerData).forEach(([key, flower]: any) => {
+          const k = key.toLowerCase().trim();
+          const t = (flower.title || '').toLowerCase().trim();
+          let score = 0;
+          if (fn === k) score = 1000;
+          else if (fn === t) score = 950;
+          else if (fn.includes(k)) score = 500;
+          else if (fn.includes(t)) score = 450;
+          else if (k.includes(fn)) score = 300;
+          else if (t.includes(fn)) score = 250;
+          else {
+            const a = fn.replace(/[-_\s]+/g, '');
+            const b = k.replace(/[-_\s]+/g, '');
+            const c = t.replace(/[-_\s]+/g, '');
+            if (a === b) score = 800;
+            else if (a === c) score = 750;
+            else if (a.includes(b)) score = 400;
+            else if (a.includes(c)) score = 350;
+            else if (b.includes(a)) score = 200;
+            else if (c.includes(a)) score = 150;
+          }
+          if (score > bestScore) { bestScore = score; bestKey = key; }
+        });
+
+        return { name: fileName, bestKey, score: bestScore };
+      });
+
+      setDebugRows(rows.sort((a,b)=>a.score-b.score));
+      setDebugOpen(true);
+    } catch (e) {
+      console.error("Audit error:", e);
+      alert("Falha ao carregar photoDescriptions.json");
+    }
+  };
+
+  // ====== seleção por nome (pula direto p/ organização) ======
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerQuery, setPickerQuery] = useState("");
+  const [pickerSelected, setPickerSelected] = useState<string[]>([]);
+
+  const filteredNames = useMemo(() => {
+    const q = pickerQuery.toLowerCase().trim();
+    if (!q) return samplePhotoNames;
+    return samplePhotoNames.filter(n => n.toLowerCase().includes(q));
+  }, [pickerQuery]);
+
+  const confirmNameSelection = () => {
+    const basePath = getBasePath();
+    const selectedPhotos = pickerSelected.slice(0,7).map((fileName, i) => ({
+      id: `pick_${i}`,
+      file: { name: fileName },
+      url: `${basePath}/sample-photos/${fileName}`,
+      status: "positive"
+    }));
+    setPhotos(selectedPhotos);
+    setChosen(selectedPhotos.map(p => p.id));
+    setStep(3); // pula direto para organização livre
+    setPickerOpen(false);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-6 flex flex-col items-center">
-      {step === -1 && <WelcomeStep startProcess={() => setStep(0)} />}
-      {step === 0 && <UploadStep handleFiles={handleFiles} fileInputRef={fileInputRef} />}
+      {/* Barra de ações no topo */}
+      <div className="w-full max-w-6xl flex justify-between items-center mb-4 text-sm">
+        <div className="text-gray-500">
+          {debugMode && (
+            <button
+              onClick={() => runDescriptionAudit(false)}
+              className="px-3 py-1.5 rounded-md bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
+              title="Somente aparece com ?debug=1 ou #debug"
+            >
+              Debug: Verificar descrições (todas)
+            </button>
+          )}
+          {debugMode && step === 3 && chosen.length > 0 && (
+            <button
+              onClick={() => runDescriptionAudit(true)}
+              className="ml-2 px-3 py-1.5 rounded-md bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
+            >
+              Debug: Verificar descrições (selecionadas)
+            </button>
+          )}
+        </div>
+
+        {step === -1 && (
+          <button
+            onClick={() => setPickerOpen(true)}
+            className="px-3 py-1.5 rounded-md bg-blue-600 text-white hover:bg-blue-700"
+            title="Escolha 7 fotos por nome e vá direto para a organização"
+          >
+            Selecionar 7 por nome
+          </button>
+        )}
+      </div>
+
+      {step === -1 && (
+        <WelcomeStep
+          startProcess={() => setStep(0)}
+        />
+      )}
+
+      {step === 0 && (
+        <UploadStep handleFiles={handleFiles} fileInputRef={fileInputRef} />
+      )}
+
       {step === 1 && photos.length > 0 && (
         <ClassificationStep
           photo={photos[currentIdx]}
@@ -282,6 +386,7 @@ export default function PhotoSelectionApp() {
           goBack={() => setCurrentIdx((i) => (i > 0 ? i - 1 : 0))}
         />
       )}
+
       {step === 2 && (
         <SelectionStep
           photos={photos.filter((p) => p.status !== "neutral")}
@@ -292,6 +397,7 @@ export default function PhotoSelectionApp() {
           setPreviewPhoto={setPreviewPhoto}
         />
       )}
+
       {step === 3 && (
         <ArrangeStep
           chosen={chosen}
@@ -309,6 +415,7 @@ export default function PhotoSelectionApp() {
           useCompact={useCompact}
         />
       )}
+
       {step === 4 && (
         <ReportStep
           finalList={finalList}
@@ -317,6 +424,100 @@ export default function PhotoSelectionApp() {
           exporting={exporting}
           setExporting={setExporting}
         />
+      )}
+
+      {/* Modal de debug */}
+      {debugOpen && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={()=>setDebugOpen(false)}>
+          <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full p-4" onClick={(e)=>e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-lg font-semibold">Relatório de descrições</h3>
+              <button onClick={()=>setDebugOpen(false)} className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200">×</button>
+            </div>
+            <div className="max-h-[60vh] overflow-auto border rounded">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 sticky top-0">
+                  <tr>
+                    <th className="text-left p-2 border-b">Foto (arquivo)</th>
+                    <th className="text-left p-2 border-b">Melhor chave</th>
+                    <th className="text-left p-2 border-b">Score</th>
+                    <th className="text-left p-2 border-b">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {debugRows.map((r, i) => (
+                    <tr key={i} className="odd:bg-white even:bg-gray-50">
+                      <td className="p-2 border-b">{r.name}</td>
+                      <td className="p-2 border-b">{r.bestKey ?? "-"}</td>
+                      <td className="p-2 border-b">{r.score}</td>
+                      <td className="p-2 border-b">
+                        {r.score >= 200 ? "OK" : <span className="text-red-600 font-medium">Sem correspondência</span>}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              Dica: “Anticeptic Bush” vs “Antiseptic Bush”, “Wooly Smokebush” vs “Wooly Smoke Bush”/“Smokebush” — grafias diferentes reduzem o score.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Selecionar 7 por nome */}
+      {pickerOpen && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={()=>setPickerOpen(false)}>
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-4" onClick={(e)=>e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-lg font-semibold">Selecionar até 7 por nome</h3>
+              <button onClick={()=>setPickerOpen(false)} className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200">×</button>
+            </div>
+
+            <input
+              value={pickerQuery}
+              onChange={(e)=>setPickerQuery(e.target.value)}
+              placeholder="Buscar por nome..."
+              className="w-full border rounded px-3 py-2 mb-3"
+            />
+
+            <div className="max-h-[50vh] overflow-auto border rounded">
+              {filteredNames.map((name) => {
+                const checked = pickerSelected.includes(name);
+                const disabled = !checked && pickerSelected.length >= 7;
+                return (
+                  <label key={name} className={`flex items-center justify-between px-3 py-2 border-b last:border-b-0 ${disabled ? "opacity-50" : ""}`}>
+                    <span className="truncate pr-2">{name.replace(/\.[^/.]+$/, "")}</span>
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      disabled={disabled}
+                      onChange={(e) => {
+                        if (e.target.checked) setPickerSelected((s)=>[...s, name]);
+                        else setPickerSelected((s)=>s.filter(n=>n!==name));
+                      }}
+                    />
+                  </label>
+                );
+              })}
+            </div>
+
+            <div className="flex items-center justify-between mt-3 text-sm">
+              <span className="text-gray-500">{pickerSelected.length}/7 selecionadas</span>
+              <div className="space-x-2">
+                <button onClick={()=>{ setPickerSelected([]); setPickerQuery(""); }} className="px-3 py-1.5 rounded bg-gray-100 hover:bg-gray-200">Limpar</button>
+                <button
+                  onClick={confirmNameSelection}
+                  disabled={pickerSelected.length === 0}
+                  className="px-3 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+                >
+                  Ir para organização
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
       )}
     </div>
   );
@@ -331,16 +532,19 @@ function WelcomeStep({ startProcess }: { startProcess: () => void }) {
     return '';
   };
   const basePath = getBasePath();
+
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="text-center space-y-8 max-w-lg mx-auto">
         <div className="flex justify-center mb-6">
           <img src={`${basePath}/Logo 111.png`} alt="Logo" className="h-72 w-auto object-contain" draggable={false}/>
         </div>
+
         <div className="space-y-4">
           <h1 className="text-5xl font-bold text-gray-800 mb-2">Diagnóstico Avançado em Terapia Vibracional</h1>
           <p className="text-xl text-gray-600 leading-relaxed">Por Flavius Raymundo</p>
         </div>
+
         <div className="space-y-4">
           <button
             onClick={startProcess}
@@ -348,10 +552,12 @@ function WelcomeStep({ startProcess }: { startProcess: () => void }) {
           >
             Iniciar
           </button>
+
           <p className="text-sm text-gray-500">
             Pressione <kbd className="px-2 py-1 bg-gray-200 rounded text-xs font-mono">Enter</kbd> ou clique no botão
           </p>
         </div>
+
         <div className="text-left bg-white p-6 rounded-lg shadow-sm border text-sm text-gray-600 space-y-2">
           <h3 className="font-semibold text-gray-800 mb-3">Como funciona:</h3>
           <div className="space-y-1">
@@ -473,7 +679,6 @@ function ArrangeStep({
           md:h-[800px] h-[75vh]
           bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg mb-6
         "
-        // No celular (useCompact=true) deixamos rolar; no desktop escondemos overflow
         style={{ userSelect: 'none', overflow: useCompact ? 'auto' : 'hidden', WebkitOverflowScrolling: 'touch' }}
       >
         <div className="absolute top-4 left-4 text-sm text-gray-500 pointer-events-none">
@@ -494,7 +699,7 @@ function ArrangeStep({
                 top: position.y,
                 width: `${CARD_W}px`,
                 height: `${CARD_H}px`,
-                touchAction: 'none', // importante para drag no iOS
+                touchAction: 'none',
                 transform: isDragging ? 'rotate(5deg)' : 'rotate(0deg)'
               }}
             >
@@ -524,10 +729,7 @@ function ArrangeStep({
             chosen.forEach((id, index) => {
               const row = Math.floor(index / cols);
               const col = index % cols;
-              newPositions[id] = {
-                x: col * (CARD_W + GUTTER_X) + 16,
-                y: row * (CARD_H + GUTTER_Y) + 16
-              };
+              newPositions[id] = { x: col * (CARD_W + GUTTER_X) + 16, y: row * (CARD_H + GUTTER_Y) + 16 };
             });
             setPhotoPositions(prev => ({ ...prev, ...newPositions }));
           }}
@@ -567,32 +769,33 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
           finalList.forEach((photo: any) => {
             if (!next[photo.id]) {
               const fileName = photo.file?.name?.toLowerCase() || '';
-              const fileNameClean = fileName.replace(/\.[^/.]+$/, '');
+              const fn = fileName.replace(/\.[^/.]+$/, '').trim();
               let bestMatch: any = null; let bestScore = 0;
-              const normalizedFileName = fileNameClean.toLowerCase().trim();
+
               Object.entries(flowerData).forEach(([key, flower]: any) => {
-                const keyForMatch = key.toLowerCase().trim();
-                const titleForMatch = flower.title?.toLowerCase().trim() || '';
+                const k = key.toLowerCase().trim();
+                const t = (flower.title || '').toLowerCase().trim();
                 let score = 0;
-                if (normalizedFileName === keyForMatch) score = 1000;
-                else if (normalizedFileName === titleForMatch) score = 950;
-                else if (normalizedFileName.includes(keyForMatch)) score = 500;
-                else if (normalizedFileName.includes(titleForMatch)) score = 450;
-                else if (keyForMatch.includes(normalizedFileName)) score = 300;
-                else if (titleForMatch.includes(normalizedFileName)) score = 250;
+                if (fn === k) score = 1000;
+                else if (fn === t) score = 950;
+                else if (fn.includes(k)) score = 500;
+                else if (fn.includes(t)) score = 450;
+                else if (k.includes(fn)) score = 300;
+                else if (t.includes(fn)) score = 250;
                 else {
-                  const fileNormalized  = normalizedFileName.replace(/[-_\s]+/g, '');
-                  const keyNormalized   = keyForMatch.replace(/[-_\s]+/g, '');
-                  const titleNormalized = titleForMatch.replace(/[-_\s]+/g, '');
-                  if (fileNormalized === keyNormalized) score = 800;
-                  else if (fileNormalized === titleNormalized) score = 750;
-                  else if (fileNormalized.includes(keyNormalized)) score = 400;
-                  else if (fileNormalized.includes(titleNormalized)) score = 350;
-                  else if (keyNormalized.includes(fileNormalized)) score = 200;
-                  else if (titleNormalized.includes(fileNormalized)) score = 150;
+                  const a = fn.replace(/[-_\s]+/g, '');
+                  const b = k.replace(/[-_\s]+/g, '');
+                  const c = t.replace(/[-_\s]+/g, '');
+                  if (a === b) score = 800;
+                  else if (a === c) score = 750;
+                  else if (a.includes(b)) score = 400;
+                  else if (a.includes(c)) score = 350;
+                  else if (b.includes(a)) score = 200;
+                  else if (c.includes(a)) score = 150;
                 }
                 if (score > bestScore) { bestScore = score; bestMatch = flower; }
               });
+
               if (bestMatch && bestScore >= 200) next[photo.id] = `${bestMatch.title}\n\n${bestMatch.description}`;
             }
           });
@@ -640,7 +843,7 @@ function ReportStep({ finalList, descriptions, setDescriptions, exporting, setEx
     const currentDate = new Date().toLocaleDateString('pt-BR',{year:'numeric',month:'long',day:'numeric'});
     pdf.setFontSize(12); pdf.text(`Relatório gerado em: ${currentDate}`, centerX, y, { align: "center" }); y += 40;
 
-    // (demais páginas com fotos/descrições — igual ao que você já tinha)
+    // (demais páginas iguais às versões anteriores)
     pdf.save(`diagnostico-${new Date().toISOString().split('T')[0]}.pdf`);
     setExporting(false);
   };
