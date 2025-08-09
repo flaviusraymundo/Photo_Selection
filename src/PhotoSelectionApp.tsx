@@ -59,7 +59,7 @@ export default function PhotoSelectionApp() {
     "Blue Leschenaultia.jpg", "Brachycome.jpg", "Brown Boronia.jpg", "Candle of Life.jpg",
     "Cape Bluebell.jpg", "Catspaw.jpg", "Christmas Tree.jpg", "Correa.jpg", "Cowkicks.jpg",
     "Cowslip Orchid.jpg", "Dampiera.jpg", "Donkey Orchid.jpg", "Fringed Lily Twiner.jpg",
-    "Fringed Mantis Orchid.jpg", "Fuchsia Grevillea.jpg", "Fuschia Gum.jpg", "Geraldton Wax.jpg",
+    "Fringed Mantis Orchid.jpg", "Fuchsia Grevillea.jpg", "Fuchsia Gum.jpg", "Geraldton Wax.jpg",
     "Giving Hands.jpg", "Goddess Grasstree.jpg", "Golden Glory.jpg", "Golden Waitsia.jpg",
     "Green Rose.jpg", "Hairy Yellow Pea.jpg", "Happy Wanderer.jpg", "Hops Bush.jpg",
     "Hybrid Pink Fairy Cowslip Orchid.jpg", "Illyarrie.jpg", "Leafless Orchid.jpg", "Macrozamia.jpg",
