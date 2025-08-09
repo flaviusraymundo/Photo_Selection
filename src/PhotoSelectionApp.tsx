@@ -67,7 +67,7 @@ export default function PhotoSelectionApp() {
 
   // Lista das 88 fotos
   const samplePhotoNames = [
-    "Anticeptic Bush.jpg","Balga Blackboy.jpg","Black Kangaroo Paw.jpg","Blue China Orchid.jpg",
+    "Antiseptic Bush.jpg","Balga Blackboy.jpg","Black Kangaroo Paw.jpg","Blue China Orchid.jpg",
     "Blue Leschenaultia.jpg","Brachycome.jpg","Brown Boronia.jpg","Candle of Life.jpg",
     "Cape Bluebell.jpg","Catspaw.jpg","Christmas Tree.jpg","Correa.jpg","Cowkicks.jpg",
     "Cowslip Orchid.jpg","Dampiera.jpg","Donkey Orchid.jpg","Fringed Lily Twiner.jpg",
